@@ -100,10 +100,10 @@ export function isPuzzleSolved(tiles: TileState[]): boolean {
 
 // Shuffle difficulty moves
 export const SHUFFLE_STEPS: Record<Difficulty, number> = {
-  practice: 12,
   easy: 35,
   medium: 85,
   hard: 200,
+  master: 320,
 };
 
 // Shuffle board using valid random walks from solved state to guarantee solvability

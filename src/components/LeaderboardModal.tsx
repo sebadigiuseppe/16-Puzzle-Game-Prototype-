@@ -140,7 +140,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               
               {/* Difficulty Filter */}
               <div className="flex items-center gap-1 bg-[#EBE7DF] p-1 rounded-xl border border-[#DAD2C3] overflow-x-auto text-xs">
-                {(['all', 'practice', 'easy', 'medium', 'hard'] as const).map((diff) => (
+                {(['all', 'easy', 'medium', 'hard', 'master'] as const).map((diff) => (
                   <button
                     key={diff}
                     id={`filter-diff-${diff}`}
@@ -151,7 +151,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         : 'text-[#7A746B] hover:text-[#4A453E] hover:bg-[#F5F2EA]'
                     }`}
                   >
-                    {diff === 'all' ? 'All' : diff === 'medium' ? 'Standard' : diff}
+                    {diff === 'all' ? 'All' : diff === 'medium' ? 'Standard' : diff === 'master' ? 'Master' : diff}
                   </button>
                 ))}
               </div>
@@ -253,7 +253,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                             </td>
                             <td className="py-2.5 px-3">
                               <div className="font-semibold text-[#4A453E] flex items-center gap-1.5">
-                                {score.playerName}
+                                {score.photoURL ? (
+                                  <img 
+                                    src={score.photoURL} 
+                                    alt={score.playerName} 
+                                    className="w-4 h-4 rounded-full object-cover border border-[#DAD2C3] shrink-0" 
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : null}
+                                <span>{score.playerName}</span>
                                 {score.rankBadge && (
                                   <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-[#EBE7DF] text-[#7A746B] border border-[#DAD2C3] font-normal">
                                     {score.rankBadge}
@@ -264,15 +272,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                             </td>
                             <td className="py-2.5 px-3 capitalize">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                                score.difficulty === 'hard'
+                                score.difficulty === 'master'
                                   ? 'bg-[#3A5A40] text-[#FDFCF8] border-[#3A5A40]'
+                                  : score.difficulty === 'hard'
+                                  ? 'bg-[#7E8260] text-[#FDFCF8] border-[#7E8260]'
                                   : score.difficulty === 'medium'
                                   ? 'bg-[#A3B18A]/30 text-[#3A5A40] border-[#9A9E7C]/40'
-                                  : score.difficulty === 'easy'
-                                  ? 'bg-[#EBE7DF] text-[#4A453E] border-[#DAD2C3]'
-                                  : 'bg-[#F5F2EA] text-[#7A746B] border-[#E5E0D5]'
+                                  : 'bg-[#EBE7DF] text-[#4A453E] border-[#DAD2C3]'
                               }`}>
-                                {score.difficulty === 'medium' ? 'Standard' : score.difficulty}
+                                {score.difficulty === 'medium' ? 'Standard' : score.difficulty === 'master' ? 'Master (Blind)' : score.difficulty}
                               </span>
                             </td>
                             <td className="py-2.5 px-3 font-sans font-bold text-[#3A5A40] tabular-nums">
@@ -401,15 +409,23 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(['practice', 'easy', 'medium', 'hard'] as Difficulty[]).map((diff) => {
+                {(['easy', 'medium', 'hard', 'master'] as Difficulty[]).map((diff) => {
                   const bestT = stats.bestTimeSeconds[diff];
                   const bestM = stats.fewestMoves[diff];
-                  const title = diff === 'medium' ? 'Standard (85 moves)' : diff === 'practice' ? 'Practice (12 moves)' : diff === 'easy' ? 'Easy (35 moves)' : 'Expert (200 moves)';
+                  const title = 
+                    diff === 'easy' ? 'Easy (35 moves)' :
+                    diff === 'medium' ? 'Standard (85 moves)' :
+                    diff === 'hard' ? 'Hard (200 moves)' : 
+                    'Master • No Numbers (320 moves)';
                   
                   return (
                     <div 
                       key={diff}
-                      className="p-3.5 rounded-2xl bg-[#F5F2EA] border border-[#E5E0D5] flex flex-col justify-between shadow-xs"
+                      className={`p-3.5 rounded-2xl border flex flex-col justify-between shadow-xs ${
+                        diff === 'master' 
+                          ? 'bg-[#3A5A40]/5 border-[#3A5A40]/30' 
+                          : 'bg-[#F5F2EA] border-[#E5E0D5]'
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-bold text-[#4A453E] text-xs capitalize">{title}</span>

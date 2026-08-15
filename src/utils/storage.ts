@@ -40,14 +40,14 @@ const INITIAL_BENCHMARK_SCORES: ScoreRecord[] = [
   },
   {
     id: 'seed-4',
-    playerName: 'SlideSwift',
-    timeInSeconds: 12.1,
-    moves: 16,
-    difficulty: 'practice',
+    playerName: 'BlindMaster',
+    timeInSeconds: 118.4,
+    moves: 146,
+    difficulty: 'master',
     date: '2026-08-14',
     imageTheme: 'Rustic Horse',
-    movesPerMinute: 79.3,
-    rankBadge: 'Pro',
+    movesPerMinute: 74.0,
+    rankBadge: 'Grandmaster',
   },
   {
     id: 'seed-5',
@@ -66,16 +66,16 @@ const INITIAL_STATS: PlayerStats = {
   gamesPlayed: 0,
   gamesWon: 0,
   bestTimeSeconds: {
-    practice: null,
     easy: null,
     medium: null,
     hard: null,
+    master: null,
   },
   fewestMoves: {
-    practice: null,
     easy: null,
     medium: null,
     hard: null,
+    master: null,
   },
   totalPlayTimeSeconds: 0,
   totalMovesMade: 0,
@@ -121,7 +121,19 @@ export function getPlayerStats(): PlayerStats {
   try {
     const raw = localStorage.getItem(STATS_KEY);
     if (!raw) return INITIAL_STATS;
-    return { ...INITIAL_STATS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return {
+      ...INITIAL_STATS,
+      ...parsed,
+      bestTimeSeconds: {
+        ...INITIAL_STATS.bestTimeSeconds,
+        ...(parsed.bestTimeSeconds || {}),
+      },
+      fewestMoves: {
+        ...INITIAL_STATS.fewestMoves,
+        ...(parsed.fewestMoves || {}),
+      },
+    };
   } catch {
     return INITIAL_STATS;
   }

@@ -4,15 +4,13 @@ import { Scoreboard } from './components/Scoreboard';
 import { PuzzleBoard } from './components/PuzzleBoard';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { VictoryModal } from './components/VictoryModal';
-import { ImageSelectorModal } from './components/ImageSelectorModal';
 import { InstructionsModal } from './components/InstructionsModal';
 import { PeekModal } from './components/PeekModal';
+import { ShuffleConfirmModal } from './components/ShuffleConfirmModal';
 import { DEFAULT_IMAGE } from './data/images';
 import { Difficulty, GameStatus, PlayerStats, PuzzleImage, ScoreRecord, TileState } from './types';
 import { 
   BLANK_ID, 
-  createInitialBoard, 
-  getDirectNeighbors, 
   getRowCol, 
   getSlidePath, 
   isPuzzleSolved, 
@@ -29,21 +27,32 @@ import {
   setSavedPlayerName, 
   updatePlayerStats 
 } from './utils/storage';
-import { Sparkles, Trophy, Shuffle, Eye, RotateCcw } from 'lucide-react';
+import { 
+  auth, 
+  onAuthStateChanged, 
+  signInWithGoogle, 
+  signOutPlayer, 
+  saveScoreToCloud, 
+  fetchCloudLeaderboard, 
+  User 
+} from './firebase';
+import { Trophy, Shuffle, Eye } from 'lucide-react';
 
 export default function App() {
-  // Puzzle & Game State
-  const [currentImage, setCurrentImage] = useState<PuzzleImage>(DEFAULT_IMAGE);
-  const [customImages, setCustomImages] = useState<PuzzleImage[]>([]);
+  // Puzzle & Game State (Fixed to Horse Portrait theme)
+  const currentImage = DEFAULT_IMAGE;
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [tiles, setTiles] = useState<TileState[]>(() => shuffleBoard('medium'));
   const [status, setStatus] = useState<GameStatus>('idle');
   const [timeSeconds, setTimeSeconds] = useState<number>(0);
   const [moves, setMoves] = useState<number>(0);
 
+  // Auth State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
   // Preferences & Toggles
-  const [showNumbers, setShowNumbers] = useState<boolean>(true);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const showNumbers = difficulty !== 'master';
 
   // Leaderboard & Analytics State
   const [scores, setScores] = useState<ScoreRecord[]>([]);
@@ -54,20 +63,66 @@ export default function App() {
   // Modals
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
   const [isVictoryOpen, setIsVictoryOpen] = useState<boolean>(false);
-  const [isImageSelectorOpen, setIsImageSelectorOpen] = useState<boolean>(false);
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
   const [isPeekOpen, setIsPeekOpen] = useState<boolean>(false);
+  const [isShuffleConfirmOpen, setIsShuffleConfirmOpen] = useState<boolean>(false);
+  const [pendingDifficulty, setPendingDifficulty] = useState<Difficulty | null>(null);
 
   // Timer reference
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const accumulatedTimeRef = useRef<number>(0);
 
-  // Load scores and stats on mount
+  // Track Firebase Auth state & fetch Cloud Leaderboard
   useEffect(() => {
-    setScores(getStoredLeaderboard());
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user?.displayName) {
+        setSavedPlayerName(user.displayName);
+        setLastPlayerName(user.displayName);
+      }
+    });
+
+    // Load initial local scores & stats
+    const localScores = getStoredLeaderboard();
+    setScores(localScores);
     setStats(getPlayerStats());
+
+    // Fetch live cloud scores
+    fetchCloudLeaderboard().then((cloudScores) => {
+      if (cloudScores && cloudScores.length > 0) {
+        // Merge without duplicating IDs
+        setScores((prev) => {
+          const map = new Map<string, ScoreRecord>();
+          [...cloudScores, ...prev].forEach((item) => map.set(item.id, item));
+          return Array.from(map.values()).sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  // Google Sign In handler
+  const handleGoogleSignIn = async () => {
+    try {
+      const user = await signInWithGoogle();
+      if (user?.displayName) {
+        setLastPlayerName(user.displayName);
+      }
+    } catch (err) {
+      console.warn('Google sign-in error:', err);
+    }
+  };
+
+  // Google Sign Out handler
+  const handleGoogleSignOut = async () => {
+    try {
+      await signOutPlayer();
+    } catch (err) {
+      console.warn('Google sign-out error:', err);
+    }
+  };
 
   // Timer interval handling
   useEffect(() => {
@@ -103,10 +158,28 @@ export default function App() {
     if (timerRef.current) clearInterval(timerRef.current);
   }, [difficulty]);
 
-  // Handle difficulty change
-  const handleDifficultyChange = (newDiff: Difficulty) => {
-    setDifficulty(newDiff);
-    startNewGame(newDiff);
+  // Request shuffle with confirmation dialog
+  const handleRequestShuffle = () => {
+    setPendingDifficulty(null);
+    setIsShuffleConfirmOpen(true);
+  };
+
+  // Request difficulty change with confirmation dialog
+  const handleRequestDifficultyChange = (newDiff: Difficulty) => {
+    if (newDiff === difficulty) return;
+    setPendingDifficulty(newDiff);
+    setIsShuffleConfirmOpen(true);
+  };
+
+  // Confirm shuffle execution
+  const handleConfirmShuffle = () => {
+    if (pendingDifficulty) {
+      setDifficulty(pendingDifficulty);
+      startNewGame(pendingDifficulty);
+      setPendingDifficulty(null);
+    } else {
+      startNewGame(difficulty);
+    }
   };
 
   // Pause / Resume Toggle
@@ -220,8 +293,8 @@ export default function App() {
     setIsVictoryOpen(true);
   };
 
-  // Submit score to Leaderboard
-  const handleSaveScore = (name: string) => {
+  // Submit score to Leaderboard (locally and Firestore cloud)
+  const handleSaveScore = async (name: string) => {
     setSavedPlayerName(name);
     setLastPlayerName(name);
 
@@ -229,6 +302,8 @@ export default function App() {
     const newRecord: ScoreRecord = {
       id: `score-${Date.now()}`,
       playerName: name,
+      photoURL: currentUser?.photoURL || null,
+      userId: currentUser?.uid || null,
       timeInSeconds: timeSeconds,
       moves: moves,
       difficulty: difficulty,
@@ -240,6 +315,9 @@ export default function App() {
 
     const updatedLeaderboard = saveScoreToLeaderboard(newRecord);
     setScores(updatedLeaderboard);
+
+    // Save to Firebase Firestore
+    await saveScoreToCloud(newRecord, currentUser);
   };
 
   // Reset Leaderboard
@@ -251,12 +329,14 @@ export default function App() {
   // Switch to next harder difficulty after win
   const handleNextDifficulty = () => {
     setIsVictoryOpen(false);
-    const order: Difficulty[] = ['practice', 'easy', 'medium', 'hard'];
+    const order: Difficulty[] = ['easy', 'medium', 'hard', 'master'];
     const currentIdx = order.indexOf(difficulty);
     if (currentIdx < order.length - 1) {
-      handleDifficultyChange(order[currentIdx + 1]);
+      const nextDiff = order[currentIdx + 1];
+      setDifficulty(nextDiff);
+      startNewGame(nextDiff);
     } else {
-      startNewGame();
+      startNewGame(difficulty);
     }
   };
 
@@ -267,14 +347,12 @@ export default function App() {
       <Navbar
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
-        showNumbers={showNumbers}
-        onToggleNumbers={() => setShowNumbers(!showNumbers)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-        onOpenImageSelector={() => setIsImageSelectorOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
-        onOpenPeek={() => setIsPeekOpen(true)}
-        onNewGame={() => startNewGame()}
         imageName={currentImage.name}
+        currentUser={currentUser}
+        onSignInGoogle={handleGoogleSignIn}
+        onSignOutGoogle={handleGoogleSignOut}
       />
 
       {/* Main Interactive Stage */}
@@ -285,7 +363,7 @@ export default function App() {
           timeSeconds={timeSeconds}
           moves={moves}
           difficulty={difficulty}
-          onChangeDifficulty={handleDifficultyChange}
+          onChangeDifficulty={handleRequestDifficultyChange}
           status={status}
           onTogglePause={handleTogglePause}
           bestTime={stats.bestTimeSeconds[difficulty]}
@@ -307,7 +385,7 @@ export default function App() {
         <div className="mt-6 flex items-center justify-center gap-2.5 flex-wrap w-full max-w-md">
           <button
             id="btn-quick-shuffle"
-            onClick={() => startNewGame()}
+            onClick={handleRequestShuffle}
             className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs"
           >
             <Shuffle className="w-4 h-4 text-[#3A5A40]" />
@@ -338,9 +416,9 @@ export default function App() {
       {/* Footer Branding */}
       <footer className="py-3 px-4 border-t border-[#E5E0D5] bg-[#F5F2EA]/40 text-center text-xs text-[#7A746B]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <span className="font-serif italic text-[#4A453E]">16-Puzzle Game • 4×4 Solvable Board</span>
+          <span className="font-serif italic text-[#4A453E]">Sliding Puzzles • 4×4 Solvable Board</span>
           <span className="text-[11px] text-[#9A9E7C]">
-            Live Timer Stopwatch & High Score Leaderboard Tracker
+            Live Timer Stopwatch & Cloud High Score Leaderboard Tracker
           </span>
         </div>
       </footer>
@@ -368,22 +446,7 @@ export default function App() {
           setIsVictoryOpen(false);
           startNewGame();
         }}
-        onNextDifficulty={difficulty !== 'hard' ? handleNextDifficulty : undefined}
-      />
-
-      {/* Image / Artwork Theme Selector */}
-      <ImageSelectorModal
-        isOpen={isImageSelectorOpen}
-        onClose={() => setIsImageSelectorOpen(false)}
-        currentImage={currentImage}
-        onSelectImage={(img) => {
-          setCurrentImage(img);
-          startNewGame();
-        }}
-        customImages={customImages}
-        onUploadCustomImage={(img) => {
-          setCustomImages((prev) => [img, ...prev]);
-        }}
+        onNextDifficulty={difficulty !== 'master' ? handleNextDifficulty : undefined}
       />
 
       {/* How to Play Help Modal */}
@@ -399,6 +462,23 @@ export default function App() {
         currentImage={currentImage}
       />
 
+      {/* Shuffle Confirmation Dialog Modal */}
+      <ShuffleConfirmModal
+        isOpen={isShuffleConfirmOpen}
+        onClose={() => {
+          setIsShuffleConfirmOpen(false);
+          setPendingDifficulty(null);
+        }}
+        onConfirm={handleConfirmShuffle}
+        difficultyName={
+          pendingDifficulty 
+            ? pendingDifficulty === 'medium' ? 'Standard' : pendingDifficulty === 'master' ? 'Master (No Numbers)' : pendingDifficulty 
+            : undefined
+        }
+        hasActiveGame={status === 'playing' || moves > 0}
+      />
+
     </div>
   );
 }
+

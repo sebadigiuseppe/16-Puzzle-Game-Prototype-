@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated player profile info",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User UID" },
+        "displayName": { "type": "string", "description": "Player display name" },
+        "email": { "type": "string", "description": "Player email" },
+        "photoURL": { "type": "string", "description": "Player avatar URL" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLoginAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName"]
+    },
+    "LeaderboardScore": {
+      "title": "LeaderboardScore",
+      "description": "Individual 16-puzzle completed game result",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "playerName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "timeInSeconds": { "type": "number" },
+        "moves": { "type": "number" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard", "master"] },
+        "date": { "type": "string" },
+        "imageTheme": { "type": "string" },
+        "movesPerMinute": { "type": "number" },
+        "rankBadge": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "playerName", "timeInSeconds", "moves", "difficulty", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile collection"
+    },
+    "/leaderboard_scores/{scoreId}": {
+      "schema": { "$ref": "#/entities/LeaderboardScore" },
+      "description": "Global leaderboard score records"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Footprints, Zap, Pause, Play, Award } from 'lucide-react';
+import { Timer, Footprints, Zap, Pause, Play, Award, ChevronDown, EyeOff, Hash } from 'lucide-react';
 import { Difficulty, GameStatus } from '../types';
 import { formatTime, formatTimeCompact } from '../utils/puzzle';
 
@@ -26,15 +26,17 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
 }) => {
   const movesPerMin = timeSeconds > 0 ? ((moves / timeSeconds) * 60).toFixed(0) : '0';
 
-  const difficulties: { key: Difficulty; label: string; desc: string }[] = [
-    { key: 'practice', label: 'Practice', desc: '12 moves' },
-    { key: 'easy', label: 'Easy', desc: '35 moves' },
-    { key: 'medium', label: 'Standard', desc: '85 moves' },
-    { key: 'hard', label: 'Expert', desc: '200 moves' },
+  const difficulties: { key: Difficulty; label: string; detail: string; hasNumbers: boolean }[] = [
+    { key: 'easy', label: 'Easy', detail: '35 moves • Numbers on', hasNumbers: true },
+    { key: 'medium', label: 'Standard', detail: '85 moves • Numbers on', hasNumbers: true },
+    { key: 'hard', label: 'Hard', detail: '200 moves • Numbers on', hasNumbers: true },
+    { key: 'master', label: 'Master', detail: '320 moves • No Numbers', hasNumbers: false },
   ];
 
+  const currentDiffConfig = difficulties.find(d => d.key === difficulty) || difficulties[1];
+
   return (
-    <div id="game-scoreboard" className="w-full max-w-xl mx-auto mb-4">
+    <div id="game-scoreboard" className="w-full max-w-2xl mx-auto mb-3">
       {/* Top Metric Cards */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 mb-3">
         
@@ -113,28 +115,50 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
 
       </div>
 
-      {/* Difficulty & Record Pill Bar */}
-      <div className="flex items-center justify-between gap-2 flex-wrap bg-[#EBE7DF] p-1.5 rounded-2xl border border-[#DAD2C3]">
+      {/* Difficulty Dropdown & Record Row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap bg-[#EBE7DF] p-2 sm:px-3 sm:py-2 rounded-2xl border border-[#DAD2C3]">
         
-        {/* Difficulty Segmented Buttons */}
-        <div className="flex items-center gap-1 flex-1 min-w-[240px]">
-          {difficulties.map(d => {
-            const active = difficulty === d.key;
-            return (
-              <button
-                key={d.key}
-                id={`btn-difficulty-${d.key}`}
-                onClick={() => onChangeDifficulty(d.key)}
-                className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-sans transition flex flex-col items-center justify-center ${
-                  active
-                    ? 'bg-[#3A5A40] text-[#FDFCF8] shadow-xs font-semibold'
-                    : 'text-[#7A746B] hover:text-[#4A453E] hover:bg-[#F5F2EA]'
-                }`}
-              >
-                <span>{d.label}</span>
-              </button>
-            );
-          })}
+        {/* Difficulty Dropdown Selector */}
+        <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+          <label htmlFor="difficulty-select" className="text-xs font-semibold text-[#4A453E] shrink-0 font-sans">
+            Difficulty:
+          </label>
+
+          <div className="relative flex-1">
+            <select
+              id="difficulty-select"
+              value={difficulty}
+              onChange={(e) => onChangeDifficulty(e.target.value as Difficulty)}
+              className="w-full appearance-none bg-[#FDFCF8] hover:bg-[#F5F2EA] text-[#4A453E] font-sans font-semibold text-xs py-2 pl-3 pr-8 rounded-xl border border-[#DAD2C3] focus:outline-none focus:border-[#3A5A40] cursor-pointer shadow-xs transition"
+            >
+              <option value="easy">Easy (35 moves • Numbers ON)</option>
+              <option value="medium">Standard (85 moves • Numbers ON)</option>
+              <option value="hard">Hard (200 moves • Numbers ON)</option>
+              <option value="master">Master (320 moves • NO NUMBERS)</option>
+            </select>
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#7A746B]">
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Difficulty badge indicator */}
+          {!currentDiffConfig.hasNumbers ? (
+            <span 
+              title="Numbers are hidden in Master mode" 
+              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-sans font-semibold px-2 py-1 rounded-xl bg-[#3A5A40] text-[#FDFCF8] shadow-xs shrink-0"
+            >
+              <EyeOff className="w-3 h-3" />
+              No Numbers
+            </span>
+          ) : (
+            <span 
+              title="Tile numbers are visible in this mode" 
+              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-sans font-semibold px-2 py-1 rounded-xl bg-[#3A5A40]/10 text-[#3A5A40] border border-[#3A5A40]/25 shrink-0"
+            >
+              <Hash className="w-3 h-3 text-[#3A5A40]" />
+              Numbers On
+            </span>
+          )}
         </div>
 
         {/* Best Record Badge for current difficulty */}
@@ -144,7 +168,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             <span>Record: <span className="font-mono font-bold">{formatTimeCompact(bestTime)}</span></span>
           </div>
         ) : (
-          <div className="px-3 py-1.5 rounded-xl bg-[#F5F2EA] text-[#7A746B] border border-[#E5E0D5] text-xs shrink-0 font-sans">
+          <div className="px-3 py-1.5 rounded-xl bg-[#FDFCF8] text-[#7A746B] border border-[#E5E0D5] text-xs shrink-0 font-sans">
             <span>No record yet</span>
           </div>
         )}

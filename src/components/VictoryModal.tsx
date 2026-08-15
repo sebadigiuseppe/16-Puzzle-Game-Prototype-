@@ -195,14 +195,14 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
             </button>
           </div>
 
-          {onNextDifficulty && difficulty !== 'hard' && (
+          {onNextDifficulty && difficulty !== 'master' && (
             <button
               id="btn-next-difficulty"
               type="button"
               onClick={onNextDifficulty}
               className="w-full py-2 text-xs text-[#3A5A40] hover:text-[#2E4833] font-semibold flex items-center justify-center gap-1 transition"
             >
-              Try next harder difficulty <ArrowRight className="w-3.5 h-3.5" />
+              Try next harder difficulty ({difficulty === 'hard' ? 'Master • No Numbers' : 'Next Level'}) <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
         </form>

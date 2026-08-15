@@ -27,7 +27,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               <HelpCircle className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold font-serif text-[#3A5A40]">How to Play 16 Puzzle</h2>
+              <h2 className="text-xl font-bold font-serif text-[#3A5A40]">How to Play Sliding Puzzles</h2>
               <p className="text-xs text-[#7A746B]">Rules, controls & speed-solving tips</p>
             </div>
           </div>
@@ -86,7 +86,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           <ul className="list-disc list-inside space-y-1 text-[11px] text-[#7A746B] leading-relaxed">
             <li><strong className="text-[#4A453E]">Row by Row:</strong> Solve Row 1 first (tiles 1, 2, 3, 4), then Row 2 (5, 6, 7, 8).</li>
             <li><strong className="text-[#4A453E]">Last Two Rows:</strong> Solve the remaining 3×2 bottom section together column-by-column.</li>
-            <li><strong className="text-[#4A453E]">Numbers Overlay:</strong> Toggle the <span className="text-[#3A5A40] font-semibold">Numbers</span> button on the top bar if you need numerical hints over the horse portrait!</li>
+            <li><strong className="text-[#4A453E]">Difficulties:</strong> Choose Easy, Standard, Hard, or test your visual mastery with <span className="text-[#3A5A40] font-semibold">Master Mode</span> (320 shuffle moves with no tile numbers)!</li>
             <li><strong className="text-[#4A453E]">Leaderboard:</strong> Your time starts on your first move. Fast moves and minimal steps boost your performance ranking.</li>
           </ul>
         </div>

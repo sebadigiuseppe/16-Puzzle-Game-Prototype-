@@ -1,4 +1,4 @@
-export type Difficulty = 'practice' | 'easy' | 'medium' | 'hard';
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'master';
 
 export type GameStatus = 'idle' | 'playing' | 'paused' | 'won';
 
@@ -19,6 +19,8 @@ export interface ScoreRecord {
   imageTheme: string;
   movesPerMinute: number;
   rankBadge?: string;
+  photoURL?: string | null;
+  userId?: string | null;
 }
 
 export interface PlayerStats {

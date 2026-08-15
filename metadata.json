@@ -1,6 +1,6 @@
 {
-  "name": "16 Puzzle Game",
-  "description": "A classic 4x4 16-puzzle sliding game featuring custom horse artwork, live timer, and a high-score leaderboard tracking player performance.",
+  "name": "Sliding Puzzles",
+  "description": "A classic 4x4 sliding puzzle game featuring horse artwork, live stopwatch timer, move counter, and cloud high-score leaderboard.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

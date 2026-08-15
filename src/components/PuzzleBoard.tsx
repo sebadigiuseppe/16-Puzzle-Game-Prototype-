@@ -95,24 +95,24 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
         ref={boardRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="w-full max-w-[440px] sm:max-w-[480px] aspect-square relative bg-[#EBE7DF] p-3 sm:p-4 rounded-[32px] sm:rounded-[40px] border border-[#DAD2C3] shadow-inner overflow-hidden"
+        className="w-full max-w-[480px] sm:max-w-[530px] md:max-w-[560px] aspect-square relative bg-[#EBE7DF] p-2 sm:p-2.5 rounded-3xl sm:rounded-[32px] border border-[#DAD2C3] shadow-inner overflow-hidden"
         style={{ touchAction: 'none' }}
       >
         {/* Background Grid Slots */}
-        <div className="w-full h-full grid grid-cols-4 grid-rows-4 gap-2 sm:gap-2.5">
+        <div className="w-full h-full grid grid-cols-4 grid-rows-4 gap-1 sm:gap-1.5">
           {Array.from({ length: 16 }).map((_, i) => (
             <div
               key={`slot-${i}`}
               id={`puzzle-slot-${i}`}
-              className="w-full h-full rounded-2xl bg-[#FDFCF8]/60 border border-dashed border-[#DAD2C3] flex items-center justify-center text-[#9A9E7C] font-sans text-xs"
+              className="w-full h-full rounded-xl sm:rounded-2xl bg-[#FDFCF8]/60 border border-dashed border-[#DAD2C3]/80 flex items-center justify-center text-[#9A9E7C] font-sans text-xs"
             >
-              <span className="opacity-40">{i + 1}</span>
+              <span className="opacity-30 text-[11px]">{i + 1}</span>
             </div>
           ))}
         </div>
 
         {/* Dynamic Sliding Tiles */}
-        <div className="absolute inset-3 sm:inset-4 pointer-events-none">
+        <div className="absolute inset-2 sm:inset-2.5 pointer-events-none">
           {tiles.map((tile) => {
             if (tile.isBlank) return null;
 
@@ -151,24 +151,24 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
                   position: 'absolute',
                   width: '25%',
                   height: '25%',
-                  padding: '3.5px',
+                  padding: '1.5px',
                 }}
                 className={`pointer-events-auto cursor-pointer transition-shadow duration-150 ${
                   isMovable ? 'hover:z-10' : 'cursor-default'
                 }`}
               >
                 <div
-                  className={`w-full h-full rounded-2xl overflow-hidden relative transition-all duration-150 group flex items-center justify-center ${
+                  className={`w-full h-full rounded-xl sm:rounded-2xl overflow-hidden relative transition-all duration-150 group flex items-center justify-center ${
                     isNumericOnly
-                      ? 'bg-[#9A9E7C] text-[#FDFCF8] shadow-md border-b-4 border-[#7E8260]'
-                      : `shadow-md border ${
+                      ? 'bg-[#9A9E7C] text-[#FDFCF8] shadow-sm border-b-2 sm:border-b-4 border-[#7E8260]'
+                      : `shadow-sm border ${
                           isCorrectPosition
-                            ? 'border-[#3A5A40] shadow-[#3A5A40]/10'
-                            : 'border-[#DAD2C3]'
+                            ? 'border-[#3A5A40]/80 shadow-[#3A5A40]/10'
+                            : 'border-[#DAD2C3]/90'
                         }`
                   } ${
                     isMovable
-                      ? 'hover:scale-[1.02] hover:border-[#3A5A40] active:scale-95'
+                      ? 'hover:scale-[1.01] hover:border-[#3A5A40] active:scale-95'
                       : ''
                   }`}
                   style={{
@@ -181,20 +181,16 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
                 >
                   {/* Subtle contrast gradient for image tiles */}
                   {!isNumericOnly && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/15 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10 pointer-events-none" />
                   )}
 
-                  {/* Tile Number Overlay / Indicator */}
-                  {!isNumericOnly && (
+                  {/* Tile Number Overlay / Indicator (Only rendered when showNumbers is enabled) */}
+                  {!isNumericOnly && showNumbers && (
                     <div
                       className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-sans font-semibold transition-opacity backdrop-blur-md flex items-center gap-0.5 shadow-xs ${
-                        showNumbers
-                          ? 'opacity-100'
-                          : 'opacity-0 group-hover:opacity-100'
-                      } ${
                         isCorrectPosition
                           ? 'bg-[#3A5A40] text-[#FDFCF8] border border-[#3A5A40]'
-                          : 'bg-[#FDFCF8]/90 text-[#4A453E] border border-[#DAD2C3]'
+                          : 'bg-[#FDFCF8]/95 text-[#4A453E] border border-[#DAD2C3]'
                       }`}
                     >
                       <span>{tileNumber}</span>
@@ -215,7 +211,7 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
 
                   {/* Subtle Movable Hover Cue */}
                   {isMovable && (
-                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#3A5A40]/40 rounded-2xl transition pointer-events-none" />
+                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#3A5A40]/40 rounded-xl sm:rounded-2xl transition pointer-events-none" />
                   )}
                 </div>
               </motion.div>
@@ -254,12 +250,12 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
       </div>
 
       {/* Helper Guidance Below Board */}
-      <div className="mt-3 flex items-center justify-between w-full max-w-[440px] sm:max-w-[480px] text-xs font-sans text-[#9A9E7C] px-2 italic">
+      <div className="mt-3 flex items-center justify-between w-full max-w-[480px] sm:max-w-[530px] md:max-w-[560px] text-xs font-sans text-[#9A9E7C] px-2 italic">
         <span className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-[#3A5A40]" />
-          Slide tiles to arrange in sequence
+          Slide tiles to restore the image
         </span>
-        <span className="hidden sm:inline">Keys: Arrow Keys / WASD</span>
+        <span className="hidden sm:inline">Controls: Click, Tap, or Arrow Keys / WASD</span>
       </div>
     </div>
   );
