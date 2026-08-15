@@ -19,6 +19,7 @@ import {
 import { sounds } from './utils/audio';
 import { 
   clearLeaderboard, 
+  deduplicateScores,
   getPlayerStats, 
   getSavedPlayerName, 
   getStoredLeaderboard, 
@@ -36,9 +37,19 @@ import {
   fetchCloudLeaderboard, 
   User 
 } from './firebase';
+import { Language, getSavedLanguage, saveLanguage, translations } from './utils/i18n';
 import { Trophy, Shuffle, Eye } from 'lucide-react';
 
 export default function App() {
+  // Language & i18n
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(getSavedLanguage);
+  const t = translations[currentLanguage];
+
+  const handleSelectLanguage = (lang: Language) => {
+    setCurrentLanguage(lang);
+    saveLanguage(lang);
+  };
+
   // Puzzle & Game State (Fixed to Horse Portrait theme)
   const currentImage = DEFAULT_IMAGE;
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -59,6 +70,7 @@ export default function App() {
   const [stats, setStats] = useState<PlayerStats>(getPlayerStats());
   const [lastPlayerName, setLastPlayerName] = useState<string>(getSavedPlayerName());
   const [isNewRecord, setIsNewRecord] = useState<boolean>(false);
+  const [hasAutoSaved, setHasAutoSaved] = useState<boolean>(false);
 
   // Modals
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
@@ -91,11 +103,9 @@ export default function App() {
     // Fetch live cloud scores
     fetchCloudLeaderboard().then((cloudScores) => {
       if (cloudScores && cloudScores.length > 0) {
-        // Merge without duplicating IDs
         setScores((prev) => {
-          const map = new Map<string, ScoreRecord>();
-          [...cloudScores, ...prev].forEach((item) => map.set(item.id, item));
-          return Array.from(map.values()).sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+          const combined = deduplicateScores([...cloudScores, ...prev]);
+          return combined.sort((a, b) => a.timeInSeconds - b.timeInSeconds);
         });
       }
     });
@@ -278,6 +288,42 @@ export default function App() {
     });
   }, [moveTileAtPosition]);
 
+  // Submit score to Leaderboard (locally and Firestore cloud)
+  const handleSaveScore = async (
+    name: string, 
+    customTime?: number, 
+    customMoves?: number, 
+    customUser?: User | null
+  ) => {
+    const finalTime = customTime ?? timeSeconds;
+    const finalMoves = customMoves ?? moves;
+    const activeUser = customUser !== undefined ? customUser : currentUser;
+
+    setSavedPlayerName(name);
+    setLastPlayerName(name);
+
+    const movesPerMin = finalTime > 0 ? (finalMoves / finalTime) * 60 : 0;
+    const newRecord: ScoreRecord = {
+      id: `score-${Date.now()}`,
+      playerName: name,
+      photoURL: activeUser?.photoURL || null,
+      userId: activeUser?.uid || null,
+      timeInSeconds: finalTime,
+      moves: finalMoves,
+      difficulty: difficulty,
+      date: new Date().toISOString().split('T')[0],
+      imageTheme: currentImage.name,
+      movesPerMinute: movesPerMin,
+      rankBadge: movesPerMin > 90 ? 'Grandmaster' : movesPerMin > 65 ? 'Master' : 'Challenger',
+    };
+
+    const updatedLeaderboard = saveScoreToLeaderboard(newRecord);
+    setScores(updatedLeaderboard);
+
+    // Save to Firebase Firestore
+    await saveScoreToCloud(newRecord, activeUser);
+  };
+
   // Handle Win Condition
   const handleWin = (finalTime: number, finalMoves: number) => {
     setStatus('won');
@@ -290,34 +336,31 @@ export default function App() {
     const updatedStats = updatePlayerStats(difficulty, finalTime, finalMoves);
     setStats(updatedStats);
 
+    // If user is already logged in, automatically save score to cloud leaderboard!
+    if (currentUser) {
+      const playerName = currentUser.displayName || currentUser.email?.split('@')[0] || lastPlayerName || 'Champion Solver';
+      handleSaveScore(playerName, finalTime, finalMoves, currentUser);
+      setHasAutoSaved(true);
+    } else {
+      setHasAutoSaved(false);
+    }
+
     setIsVictoryOpen(true);
   };
 
-  // Submit score to Leaderboard (locally and Firestore cloud)
-  const handleSaveScore = async (name: string) => {
-    setSavedPlayerName(name);
-    setLastPlayerName(name);
-
-    const movesPerMin = timeSeconds > 0 ? (moves / timeSeconds) * 60 : 0;
-    const newRecord: ScoreRecord = {
-      id: `score-${Date.now()}`,
-      playerName: name,
-      photoURL: currentUser?.photoURL || null,
-      userId: currentUser?.uid || null,
-      timeInSeconds: timeSeconds,
-      moves: moves,
-      difficulty: difficulty,
-      date: new Date().toISOString().split('T')[0],
-      imageTheme: currentImage.name,
-      movesPerMinute: movesPerMin,
-      rankBadge: movesPerMin > 90 ? 'Grandmaster' : movesPerMin > 65 ? 'Master' : 'Challenger',
-    };
-
-    const updatedLeaderboard = saveScoreToLeaderboard(newRecord);
-    setScores(updatedLeaderboard);
-
-    // Save to Firebase Firestore
-    await saveScoreToCloud(newRecord, currentUser);
+  // Sign In with Google and immediately auto-save the score
+  const handleSignInAndSave = async () => {
+    try {
+      const user = await signInWithGoogle();
+      if (user) {
+        setCurrentUser(user);
+        const playerName = user.displayName || user.email?.split('@')[0] || 'Champion Solver';
+        await handleSaveScore(playerName, timeSeconds, moves, user);
+        setHasAutoSaved(true);
+      }
+    } catch (e) {
+      console.error('Failed to sign in and save score:', e);
+    }
   };
 
   // Reset Leaderboard
@@ -349,10 +392,13 @@ export default function App() {
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
-        imageName={currentImage.name}
         currentUser={currentUser}
         onSignInGoogle={handleGoogleSignIn}
         onSignOutGoogle={handleGoogleSignOut}
+        currentLanguage={currentLanguage}
+        onSelectLanguage={handleSelectLanguage}
+        difficulty={difficulty}
+        onChangeDifficulty={handleRequestDifficultyChange}
       />
 
       {/* Main Interactive Stage */}
@@ -362,12 +408,10 @@ export default function App() {
         <Scoreboard
           timeSeconds={timeSeconds}
           moves={moves}
-          difficulty={difficulty}
-          onChangeDifficulty={handleRequestDifficultyChange}
           status={status}
           onTogglePause={handleTogglePause}
-          bestTime={stats.bestTimeSeconds[difficulty]}
           fewestMoves={stats.fewestMoves[difficulty]}
+          language={currentLanguage}
         />
 
         {/* The 4x4 Puzzle Board */}
@@ -379,6 +423,7 @@ export default function App() {
           onTileClick={moveTileAtPosition}
           onKeyDownMove={handleKeyDownMove}
           onResume={handleResume}
+          language={currentLanguage}
         />
 
         {/* Quick Footer Action Bar */}
@@ -389,7 +434,7 @@ export default function App() {
             className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs"
           >
             <Shuffle className="w-4 h-4 text-[#3A5A40]" />
-            Shuffle Board
+            {t.shuffleBoard}
           </button>
 
           <button
@@ -398,16 +443,7 @@ export default function App() {
             className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs"
           >
             <Eye className="w-4 h-4 text-[#7E8260]" />
-            Reference Photo
-          </button>
-
-          <button
-            id="btn-quick-leaderboard"
-            onClick={() => setIsLeaderboardOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs"
-          >
-            <Trophy className="w-4 h-4 text-[#3A5A40]" />
-            High Scores
+            {t.referencePhoto}
           </button>
         </div>
 
@@ -416,7 +452,7 @@ export default function App() {
       {/* Footer Branding */}
       <footer className="py-3 px-4 border-t border-[#E5E0D5] bg-[#F5F2EA]/40 text-center text-xs text-[#7A746B]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <span className="font-serif italic text-[#4A453E]">Sliding Puzzles • 4×4 Solvable Board</span>
+          <span className="font-serif italic text-[#4A453E]">{t.appTitle} • {t.footerNote}</span>
           <span className="text-[11px] text-[#9A9E7C]">
             Live Timer Stopwatch & Cloud High Score Leaderboard Tracker
           </span>
@@ -429,7 +465,11 @@ export default function App() {
         onClose={() => setIsLeaderboardOpen(false)}
         scores={scores}
         stats={stats}
+        currentUser={currentUser}
+        currentUserName={currentUser?.displayName || lastPlayerName}
+        onSignInGoogle={handleGoogleSignIn}
         onClearLeaderboard={handleClearLeaderboard}
+        language={currentLanguage}
       />
 
       {/* Victory Celebration Modal */}
@@ -438,21 +478,29 @@ export default function App() {
         timeSeconds={timeSeconds}
         moves={moves}
         difficulty={difficulty}
-        imageTheme={currentImage.name}
         isNewRecord={isNewRecord}
+        currentUser={currentUser}
         initialPlayerName={lastPlayerName}
+        hasAutoSaved={hasAutoSaved}
         onSaveScore={handleSaveScore}
+        onSignInAndSave={handleSignInAndSave}
+        onOpenLeaderboard={() => {
+          setIsVictoryOpen(false);
+          setIsLeaderboardOpen(true);
+        }}
         onPlayAgain={() => {
           setIsVictoryOpen(false);
           startNewGame();
         }}
         onNextDifficulty={difficulty !== 'master' ? handleNextDifficulty : undefined}
+        language={currentLanguage}
       />
 
       {/* How to Play Help Modal */}
       <InstructionsModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+        language={currentLanguage}
       />
 
       {/* Target Picture Reference Peek Modal */}
@@ -460,6 +508,7 @@ export default function App() {
         isOpen={isPeekOpen}
         onClose={() => setIsPeekOpen(false)}
         currentImage={currentImage}
+        language={currentLanguage}
       />
 
       {/* Shuffle Confirmation Dialog Modal */}
@@ -476,9 +525,11 @@ export default function App() {
             : undefined
         }
         hasActiveGame={status === 'playing' || moves > 0}
+        language={currentLanguage}
       />
 
     </div>
   );
 }
+
 

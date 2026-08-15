@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shuffle, AlertCircle } from 'lucide-react';
+import { Language, translations } from '../utils/i18n';
 
 interface ShuffleConfirmModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface ShuffleConfirmModalProps {
   onConfirm: () => void;
   difficultyName?: string;
   hasActiveGame: boolean;
+  language: Language;
 }
 
 export const ShuffleConfirmModal: React.FC<ShuffleConfirmModalProps> = ({
@@ -15,8 +17,11 @@ export const ShuffleConfirmModal: React.FC<ShuffleConfirmModalProps> = ({
   onConfirm,
   difficultyName,
   hasActiveGame,
+  language,
 }) => {
   if (!isOpen) return null;
+
+  const t = translations[language];
 
   return (
     <div
@@ -36,10 +41,10 @@ export const ShuffleConfirmModal: React.FC<ShuffleConfirmModalProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-bold font-serif text-[#3A5A40] leading-tight">
-              Shuffle Puzzle?
+              {t.shuffleTitle}
             </h2>
             <p className="text-xs text-[#7A746B]">
-              {difficultyName ? `Difficulty: ${difficultyName}` : 'Reset & rearrange tiles'}
+              {difficultyName ? `${t.difficulty}: ${difficultyName}` : t.shuffleTitle}
             </p>
           </div>
         </div>
@@ -50,12 +55,12 @@ export const ShuffleConfirmModal: React.FC<ShuffleConfirmModalProps> = ({
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-[#7E8260] shrink-0 mt-0.5" />
               <p className="leading-relaxed">
-                Your current game in progress, moves, and timer will be reset with a fresh solvable shuffle.
+                {t.shuffleResetWarn}
               </p>
             </div>
           ) : (
             <p className="leading-relaxed text-[#7A746B]">
-              Are you ready to shuffle the 16-puzzle board and generate a new solvable starting layout?
+              {t.shufflePrompt}
             </p>
           )}
         </div>
@@ -68,7 +73,7 @@ export const ShuffleConfirmModal: React.FC<ShuffleConfirmModalProps> = ({
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] font-semibold text-xs transition"
           >
-            Cancel
+            {t.cancel}
           </button>
           <button
             id="btn-confirm-shuffle"
@@ -80,7 +85,7 @@ export const ShuffleConfirmModal: React.FC<ShuffleConfirmModalProps> = ({
             className="px-5 py-2.5 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-semibold text-xs shadow-xs transition flex items-center gap-1.5"
           >
             <Shuffle className="w-3.5 h-3.5" />
-            <span>Yes, Shuffle</span>
+            <span>{t.yesShuffle}</span>
           </button>
         </div>
       </div>

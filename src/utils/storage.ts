@@ -81,6 +81,25 @@ const INITIAL_STATS: PlayerStats = {
   totalMovesMade: 0,
 };
 
+export function deduplicateScores(records: ScoreRecord[]): ScoreRecord[] {
+  const seenKeys = new Set<string>();
+  const result: ScoreRecord[] = [];
+
+  for (const record of records) {
+    // Unique key identifying a specific recorded win
+    const compositeKey = record.id && !record.id.startsWith('score-')
+      ? record.id
+      : `${record.userId || record.playerName}_${record.difficulty}_${record.timeInSeconds}_${record.moves}_${record.date}`;
+
+    if (!seenKeys.has(compositeKey)) {
+      seenKeys.add(compositeKey);
+      result.push(record);
+    }
+  }
+
+  return result;
+}
+
 export function getStoredLeaderboard(): ScoreRecord[] {
   try {
     const raw = localStorage.getItem(LEADERBOARD_KEY);
@@ -88,7 +107,8 @@ export function getStoredLeaderboard(): ScoreRecord[] {
       localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(INITIAL_BENCHMARK_SCORES));
       return INITIAL_BENCHMARK_SCORES;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return deduplicateScores(parsed);
   } catch {
     return INITIAL_BENCHMARK_SCORES;
   }
@@ -97,11 +117,28 @@ export function getStoredLeaderboard(): ScoreRecord[] {
 export function saveScoreToLeaderboard(record: ScoreRecord): ScoreRecord[] {
   try {
     const current = getStoredLeaderboard();
+    // Check if duplicate already exists (e.g. same user/player, difficulty, time and moves)
+    const isDuplicate = current.some((s) => {
+      if (s.id === record.id) return true;
+      const sameUser = (record.userId && s.userId === record.userId) || 
+                       (s.playerName.trim().toLowerCase() === record.playerName.trim().toLowerCase());
+      const sameStats = s.difficulty === record.difficulty && 
+                        Math.abs(s.timeInSeconds - record.timeInSeconds) < 0.05 && 
+                        s.moves === record.moves;
+      return sameUser && sameStats;
+    });
+
+    if (isDuplicate) {
+      return current;
+    }
+
     const updated = [record, ...current];
     // Sort primarily by time, then moves
     updated.sort((a, b) => a.timeInSeconds - b.timeInSeconds || a.moves - b.moves);
+    // Deduplicate
+    const deduped = deduplicateScores(updated);
     // Keep top 100
-    const trimmed = updated.slice(0, 100);
+    const trimmed = deduped.slice(0, 100);
     localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(trimmed));
     return trimmed;
   } catch {

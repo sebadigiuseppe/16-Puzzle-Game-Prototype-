@@ -11,17 +11,26 @@ import {
   RotateCcw, 
   Filter,
   Flame,
-  Clock
+  Clock,
+  User as UserIcon,
+  Sparkles,
+  ArrowUpRight
 } from 'lucide-react';
 import { Difficulty, PlayerStats, ScoreRecord } from '../types';
 import { formatTime, formatTimeCompact } from '../utils/puzzle';
+import { Language, translations } from '../utils/i18n';
+import { User } from '../firebase';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   scores: ScoreRecord[];
   stats: PlayerStats;
+  currentUser: User | null;
+  currentUserName: string;
+  onSignInGoogle: () => void;
   onClearLeaderboard: () => void;
+  language: Language;
 }
 
 export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
@@ -29,30 +38,64 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   onClose,
   scores,
   stats,
+  currentUser,
+  currentUserName,
+  onSignInGoogle,
   onClearLeaderboard,
+  language,
 }) => {
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'stats'>('leaderboard');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | 'all'>('all');
   const [sortBy, setSortBy] = useState<'time' | 'moves' | 'apm'>('time');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmClear, setConfirmClear] = useState(false);
+  const t = translations[language];
 
-  // Filter and sort scores
+  // Filter, deduplicate, and sort scores
   const filteredScores = useMemo(() => {
-    return scores
-      .filter((s) => {
-        const matchesDiff = selectedDifficulty === 'all' || s.difficulty === selectedDifficulty;
-        const matchesSearch = s.playerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              s.imageTheme.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesDiff && matchesSearch;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'time') return a.timeInSeconds - b.timeInSeconds;
-        if (sortBy === 'moves') return a.moves - b.moves;
-        if (sortBy === 'apm') return (b.movesPerMinute || 0) - (a.movesPerMinute || 0);
-        return 0;
-      });
+    // 1. Filter matching criteria
+    const filtered = scores.filter((s) => {
+      const matchesDiff = selectedDifficulty === 'all' || s.difficulty === selectedDifficulty;
+      const matchesSearch = s.playerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (s.imageTheme && s.imageTheme.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesDiff && matchesSearch;
+    });
+
+    // 2. Strict deduplication to ensure identical runs don't appear twice
+    const seen = new Set<string>();
+    const unique: ScoreRecord[] = [];
+    for (const item of filtered) {
+      const dedupeKey = `${(item.userId || item.playerName).trim().toLowerCase()}_${item.difficulty}_${Math.round(item.timeInSeconds * 10)}_${item.moves}_${item.date}`;
+      if (!seen.has(dedupeKey)) {
+        seen.add(dedupeKey);
+        unique.push(item);
+      }
+    }
+
+    // 3. Sort
+    return unique.sort((a, b) => {
+      if (sortBy === 'time') return a.timeInSeconds - b.timeInSeconds;
+      if (sortBy === 'moves') return a.moves - b.moves;
+      if (sortBy === 'apm') return (b.movesPerMinute || 0) - (a.movesPerMinute || 0);
+      return 0;
+    });
   }, [scores, selectedDifficulty, sortBy, searchQuery]);
+
+  // Find user's best rank and entry in the current view
+  const userStanding = useMemo(() => {
+    const userIndex = filteredScores.findIndex((s) => {
+      if (currentUser && s.userId && s.userId === currentUser.uid) return true;
+      if (currentUserName && s.playerName.trim().toLowerCase() === currentUserName.trim().toLowerCase()) return true;
+      return false;
+    });
+
+    if (userIndex === -1) return null;
+    return {
+      rank: userIndex + 1,
+      score: filteredScores[userIndex],
+      total: filteredScores.length,
+    };
+  }, [filteredScores, currentUser, currentUserName]);
 
   if (!isOpen) return null;
 
@@ -87,17 +130,17 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold font-serif text-[#3A5A40] flex items-center gap-2">
-                Leaderboard & Performance
+                {t.leaderboardTitle}
               </h2>
               <p className="text-xs text-[#7A746B]">
-                Track best times, fewest moves, and player statistics
+                {t.leaderboardSubtitle}
               </p>
             </div>
           </div>
           <button
             id="btn-close-leaderboard"
             onClick={onClose}
-            className="p-2 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#7A746B] hover:text-[#4A453E] border border-[#E5E0D5] transition shadow-xs"
+            className="p-2 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#7A746B] hover:text-[#4A453E] border border-[#E5E0D5] transition shadow-xs cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -108,26 +151,26 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <button
             id="tab-leaderboard"
             onClick={() => setActiveTab('leaderboard')}
-            className={`py-3 px-4 text-xs font-bold border-b-2 flex items-center gap-2 transition uppercase tracking-wider ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 flex items-center gap-2 transition uppercase tracking-wider cursor-pointer ${
               activeTab === 'leaderboard'
                 ? 'border-[#3A5A40] text-[#3A5A40]'
                 : 'border-transparent text-[#7A746B] hover:text-[#4A453E]'
             }`}
           >
             <Medal className="w-4 h-4" />
-            Rankings ({filteredScores.length})
+            {t.tabGlobal} ({filteredScores.length})
           </button>
           <button
             id="tab-stats"
             onClick={() => setActiveTab('stats')}
-            className={`py-3 px-4 text-xs font-bold border-b-2 flex items-center gap-2 transition uppercase tracking-wider ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 flex items-center gap-2 transition uppercase tracking-wider cursor-pointer ${
               activeTab === 'stats'
                 ? 'border-[#3A5A40] text-[#3A5A40]'
                 : 'border-transparent text-[#7A746B] hover:text-[#4A453E]'
             }`}
           >
             <BarChart2 className="w-4 h-4" />
-            Analytics
+            {t.tabStats}
           </button>
         </div>
 
@@ -135,6 +178,92 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         {activeTab === 'leaderboard' && (
           <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-4">
             
+            {/* USER STANDING HIGHLIGHT BANNER */}
+            {userStanding ? (
+              <div 
+                id="user-standing-card"
+                className="bg-gradient-to-r from-[#3A5A40]/15 via-[#A3B18A]/20 to-[#F5F2EA] border-2 border-[#3A5A40]/40 rounded-2xl p-3.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-3">
+                  {/* Standing Rank Pill */}
+                  <div className="w-12 h-12 rounded-2xl bg-[#3A5A40] text-[#FDFCF8] flex flex-col items-center justify-center font-serif font-black shadow-xs shrink-0">
+                    <span className="text-[10px] font-sans font-medium uppercase tracking-wider leading-none text-[#A3B18A]">Rank</span>
+                    <span className="text-lg leading-tight">#{userStanding.rank}</span>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-[#3A5A40] uppercase tracking-wider">
+                        {t.yourStanding}
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#3A5A40] text-[#FDFCF8] font-bold">
+                        {t.youBadge}
+                      </span>
+                      <span className="text-xs text-[#7A746B]">
+                        (Top {Math.round((userStanding.rank / userStanding.total) * 100)}% of {userStanding.total} solvers)
+                      </span>
+                    </div>
+
+                    <div className="text-sm font-bold text-[#4A453E] flex items-center gap-1.5 mt-0.5">
+                      {currentUser?.photoURL ? (
+                        <img 
+                          src={currentUser.photoURL} 
+                          alt="You" 
+                          className="w-4 h-4 rounded-full object-cover border border-[#3A5A40]/40" 
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : null}
+                      <span>{userStanding.score.playerName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Standing Stats summary */}
+                <div className="flex items-center gap-3 bg-[#FDFCF8]/90 border border-[#DAD2C3] px-3 py-1.5 rounded-xl text-xs shrink-0">
+                  <div>
+                    <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.time}</div>
+                    <div className="font-bold text-[#3A5A40] tabular-nums">
+                      {formatTime(userStanding.score.timeInSeconds)}
+                    </div>
+                  </div>
+                  <div className="border-l border-[#E5E0D5] pl-3">
+                    <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.moves}</div>
+                    <div className="font-bold text-[#4A453E] tabular-nums">
+                      {userStanding.score.moves}
+                    </div>
+                  </div>
+                  <div className="border-l border-[#E5E0D5] pl-3">
+                    <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.colPace}</div>
+                    <div className="font-bold text-[#7E8260] tabular-nums">
+                      {Math.round(userStanding.score.movesPerMinute || 0)} m/m
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : currentUser ? (
+              <div className="bg-[#F5F2EA] border border-[#DAD2C3] rounded-2xl p-3 text-xs text-[#7A746B] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#3A5A40]" />
+                  <span>{t.notRankedYet}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#F5F2EA] border border-[#DAD2C3] rounded-2xl p-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs text-[#7A746B]">
+                  <UserIcon className="w-4 h-4 text-[#3A5A40]" />
+                  <span>{t.signInToTrackStanding}</span>
+                </div>
+                <button
+                  id="btn-leaderboard-signin"
+                  onClick={onSignInGoogle}
+                  className="px-3 py-1.5 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] border border-[#DAD2C3] text-xs font-bold text-[#3A5A40] flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <span>{t.signIn}</span>
+                </button>
+              </div>
+            )}
+
             {/* Filters Bar */}
             <div className="flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center">
               
@@ -145,13 +274,13 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     key={diff}
                     id={`filter-diff-${diff}`}
                     onClick={() => setSelectedDifficulty(diff)}
-                    className={`px-2.5 py-1 rounded-lg capitalize font-medium transition ${
+                    className={`px-2.5 py-1 rounded-lg capitalize font-medium transition cursor-pointer ${
                       selectedDifficulty === diff
                         ? 'bg-[#3A5A40] text-[#FDFCF8] font-semibold shadow-xs'
                         : 'text-[#7A746B] hover:text-[#4A453E] hover:bg-[#F5F2EA]'
                     }`}
                   >
-                    {diff === 'all' ? 'All' : diff === 'medium' ? 'Standard' : diff === 'master' ? 'Master' : diff}
+                    {diff === 'all' ? t.filterAll : diff === 'medium' ? 'Standard' : diff === 'master' ? 'Master' : diff}
                   </button>
                 ))}
               </div>
@@ -162,7 +291,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7A746B]" />
                   <input
                     type="text"
-                    placeholder="Search player..."
+                    placeholder={`${t.colPlayer}...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-8 pr-2.5 py-1.5 bg-[#F5F2EA] border border-[#E5E0D5] rounded-xl text-xs text-[#4A453E] placeholder-[#9A9E7C] focus:outline-none focus:border-[#3A5A40]"
@@ -175,63 +304,72 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   </span>
                   <button
                     onClick={() => setSortBy('time')}
-                    className={`px-2 py-1 rounded-lg ${
+                    className={`px-2 py-1 rounded-lg cursor-pointer ${
                       sortBy === 'time' ? 'bg-[#3A5A40] text-[#FDFCF8] font-semibold shadow-xs' : 'text-[#7A746B] hover:text-[#4A453E]'
                     }`}
                     title="Sort by fastest time"
                   >
-                    Time
+                    {t.colTime}
                   </button>
                   <button
                     onClick={() => setSortBy('moves')}
-                    className={`px-2 py-1 rounded-lg ${
+                    className={`px-2 py-1 rounded-lg cursor-pointer ${
                       sortBy === 'moves' ? 'bg-[#3A5A40] text-[#FDFCF8] font-semibold shadow-xs' : 'text-[#7A746B] hover:text-[#4A453E]'
                     }`}
                     title="Sort by fewest moves"
                   >
-                    Moves
+                    {t.colMoves}
                   </button>
                   <button
                     onClick={() => setSortBy('apm')}
-                    className={`px-2 py-1 rounded-lg ${
+                    className={`px-2 py-1 rounded-lg cursor-pointer ${
                       sortBy === 'apm' ? 'bg-[#3A5A40] text-[#FDFCF8] font-semibold shadow-xs' : 'text-[#7A746B] hover:text-[#4A453E]'
                     }`}
                     title="Sort by highest moves per minute"
                   >
-                    Pace
+                    {t.colPace}
                   </button>
                 </div>
               </div>
 
             </div>
 
-            {/* Scores Table */}
+            {/* Scores Table with User Row Highlighting */}
             <div className="border border-[#E5E0D5] rounded-2xl overflow-hidden bg-[#FDFCF8] shadow-xs">
               {filteredScores.length === 0 ? (
                 <div className="py-12 text-center text-[#7A746B] text-xs">
-                  No records match your filters. Complete a puzzle to post a high score!
+                  {t.noScoresYet}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#EBE7DF] text-[#7A746B] border-b border-[#DAD2C3] uppercase tracking-wider font-semibold text-[10px]">
                       <tr>
-                        <th className="py-2.5 px-3"># Rank</th>
-                        <th className="py-2.5 px-3">Player</th>
-                        <th className="py-2.5 px-3">Difficulty</th>
-                        <th className="py-2.5 px-3">Time</th>
-                        <th className="py-2.5 px-3">Moves</th>
-                        <th className="py-2.5 px-3">Pace</th>
-                        <th className="py-2.5 px-3 text-right">Date</th>
+                        <th className="py-2.5 px-3"># {t.colRank}</th>
+                        <th className="py-2.5 px-3">{t.colPlayer}</th>
+                        <th className="py-2.5 px-3">{t.difficulty}</th>
+                        <th className="py-2.5 px-3">{t.colTime}</th>
+                        <th className="py-2.5 px-3">{t.colMoves}</th>
+                        <th className="py-2.5 px-3">{t.colPace}</th>
+                        <th className="py-2.5 px-3 text-right">{t.colDate}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E5E0D5]">
                       {filteredScores.map((score, idx) => {
+                        const isCurrentUser = Boolean(
+                          (currentUser && score.userId && score.userId === currentUser.uid) ||
+                          (currentUserName && score.playerName.trim().toLowerCase() === currentUserName.trim().toLowerCase())
+                        );
+
                         return (
                           <tr 
                             key={score.id}
-                            className={`hover:bg-[#F5F2EA]/70 transition ${
-                              idx === 0 ? 'bg-[#3A5A40]/5' : ''
+                            className={`transition ${
+                              isCurrentUser
+                                ? 'bg-[#3A5A40]/15 hover:bg-[#3A5A40]/25 border-l-4 border-l-[#3A5A40] font-medium'
+                                : idx === 0 
+                                ? 'bg-[#3A5A40]/5 hover:bg-[#F5F2EA]/70' 
+                                : 'hover:bg-[#F5F2EA]/70'
                             }`}
                           >
                             <td className="py-2.5 px-3 font-sans font-bold">
@@ -248,11 +386,13 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                                   🥉 3rd
                                 </span>
                               ) : (
-                                <span className="text-[#9A9E7C] pl-1">{idx + 1}</span>
+                                <span className={`pl-1 ${isCurrentUser ? 'text-[#3A5A40] font-black' : 'text-[#9A9E7C]'}`}>
+                                  {idx + 1}
+                                </span>
                               )}
                             </td>
                             <td className="py-2.5 px-3">
-                              <div className="font-semibold text-[#4A453E] flex items-center gap-1.5">
+                              <div className="font-semibold text-[#4A453E] flex items-center gap-1.5 flex-wrap">
                                 {score.photoURL ? (
                                   <img 
                                     src={score.photoURL} 
@@ -261,14 +401,20 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                                     referrerPolicy="no-referrer"
                                   />
                                 ) : null}
-                                <span>{score.playerName}</span>
+                                <span className={isCurrentUser ? 'text-[#3A5A40] font-bold' : ''}>
+                                  {score.playerName}
+                                </span>
+                                {isCurrentUser && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-[#3A5A40] text-[#FDFCF8] font-bold">
+                                    {t.youBadge}
+                                  </span>
+                                )}
                                 {score.rankBadge && (
                                   <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-[#EBE7DF] text-[#7A746B] border border-[#DAD2C3] font-normal">
                                     {score.rankBadge}
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-[#9A9E7C]">{score.imageTheme}</div>
                             </td>
                             <td className="py-2.5 px-3 capitalize">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
@@ -280,7 +426,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                                   ? 'bg-[#A3B18A]/30 text-[#3A5A40] border-[#9A9E7C]/40'
                                   : 'bg-[#EBE7DF] text-[#4A453E] border-[#DAD2C3]'
                               }`}>
-                                {score.difficulty === 'medium' ? 'Standard' : score.difficulty === 'master' ? 'Master (Blind)' : score.difficulty}
+                                {score.difficulty === 'medium' ? 'Standard' : score.difficulty === 'master' ? 'Master' : score.difficulty}
                               </span>
                             </td>
                             <td className="py-2.5 px-3 font-sans font-bold text-[#3A5A40] tabular-nums">
@@ -311,30 +457,30 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               </span>
               {confirmClear ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-rose-700">Reset all records?</span>
+                  <span className="text-xs text-rose-700">{t.clearHistory}?</span>
                   <button
                     onClick={() => {
                       onClearLeaderboard();
                       setConfirmClear(false);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold"
+                    className="px-2.5 py-1 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold cursor-pointer"
                   >
-                    Confirm Reset
+                    {t.clearHistory}
                   </button>
                   <button
                     onClick={() => setConfirmClear(false)}
-                    className="px-2.5 py-1 rounded-lg bg-[#EBE7DF] text-[#4A453E] text-xs"
+                    className="px-2.5 py-1 rounded-lg bg-[#EBE7DF] text-[#4A453E] text-xs cursor-pointer"
                   >
-                    Cancel
+                    {t.cancel}
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setConfirmClear(true)}
-                  className="text-xs text-[#7A746B] hover:text-rose-700 flex items-center gap-1 transition"
+                  className="text-xs text-[#7A746B] hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Reset Leaderboard
+                  {t.clearHistory}
                 </button>
               )}
             </div>
@@ -351,20 +497,20 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#F5F2EA] border border-[#E5E0D5] shadow-xs">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9E7C] mb-1 flex items-center gap-1">
                   <Trophy className="w-3.5 h-3.5 text-[#3A5A40]" />
-                  Games Won
+                  {t.statTotalSolves}
                 </div>
                 <div className="text-2xl font-sans font-medium tabular-nums text-[#4A453E]">
                   {stats.gamesWon} <span className="text-xs font-normal text-[#9A9E7C]">/ {stats.gamesPlayed}</span>
                 </div>
                 <div className="text-[10px] text-[#7A746B] mt-1">
-                  Win Rate: <span className="text-[#3A5A40] font-semibold">{winRate}%</span>
+                  {t.statWinRate}: <span className="text-[#3A5A40] font-semibold">{winRate}%</span>
                 </div>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-[#F5F2EA] border border-[#E5E0D5] shadow-xs">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9E7C] mb-1 flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-[#3A5A40]" />
-                  Total Time
+                  {t.statTotalTime}
                 </div>
                 <div className="text-2xl font-sans font-medium tabular-nums text-[#4A453E]">
                   {formatTimeCompact(stats.totalPlayTimeSeconds)}
@@ -377,7 +523,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#F5F2EA] border border-[#E5E0D5] shadow-xs">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9E7C] mb-1 flex items-center gap-1">
                   <Footprints className="w-3.5 h-3.5 text-[#3A5A40]" />
-                  Total Moves
+                  {t.statTotalMoves}
                 </div>
                 <div className="text-2xl font-sans font-medium tabular-nums text-[#4A453E]">
                   {stats.totalMovesMade}
@@ -390,7 +536,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#F5F2EA] border border-[#E5E0D5] shadow-xs">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9E7C] mb-1 flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5 text-[#7E8260]" />
-                  Overall Pace
+                  {t.colPace}
                 </div>
                 <div className="text-2xl font-sans font-medium tabular-nums text-[#3A5A40]">
                   {overallAPM} <span className="text-xs font-normal text-[#7A746B]">m/min</span>
@@ -405,7 +551,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             <div>
               <h3 className="text-xs font-bold font-sans uppercase tracking-widest text-[#9A9E7C] mb-3 flex items-center gap-1.5">
                 <Flame className="w-4 h-4 text-[#3A5A40]" />
-                Personal Records by Difficulty
+                {t.tabStats}
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -413,10 +559,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   const bestT = stats.bestTimeSeconds[diff];
                   const bestM = stats.fewestMoves[diff];
                   const title = 
-                    diff === 'easy' ? 'Easy (35 moves)' :
-                    diff === 'medium' ? 'Standard (85 moves)' :
-                    diff === 'hard' ? 'Hard (200 moves)' : 
-                    'Master • No Numbers (320 moves)';
+                    diff === 'easy' ? 'Easy (3 moves)' :
+                    diff === 'medium' ? 'Standard (40 moves)' :
+                    diff === 'hard' ? 'Hard (80 moves)' : 
+                    'Master • No Numbers (120 moves)';
                   
                   return (
                     <div 
@@ -440,7 +586,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         <div className="bg-[#FDFCF8] p-2.5 rounded-xl border border-[#E5E0D5]">
                           <div className="text-[10px] text-[#9A9E7C] flex items-center gap-1 mb-0.5">
                             <Timer className="w-3 h-3 text-[#3A5A40]" />
-                            Best Time
+                            {t.bestTime}
                           </div>
                           <div className="font-sans font-bold text-[#3A5A40] tabular-nums">
                             {bestT !== null ? formatTime(bestT) : '--:--.-'}
@@ -450,7 +596,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         <div className="bg-[#FDFCF8] p-2.5 rounded-xl border border-[#E5E0D5]">
                           <div className="text-[10px] text-[#9A9E7C] flex items-center gap-1 mb-0.5">
                             <Footprints className="w-3 h-3 text-[#7E8260]" />
-                            Fewest Moves
+                            {t.fewestMoves}
                           </div>
                           <div className="font-sans font-bold text-[#4A453E] tabular-nums">
                             {bestM !== null ? `${bestM} moves` : '--'}
@@ -471,9 +617,9 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <button
             id="btn-dismiss-leaderboard"
             onClick={onClose}
-            className="px-6 py-2 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-semibold text-xs shadow-xs transition"
+            className="px-6 py-2 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-semibold text-xs shadow-xs transition cursor-pointer"
           >
-            Close
+            {t.close}
           </button>
         </div>
 

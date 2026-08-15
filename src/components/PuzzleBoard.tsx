@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TileState, GameStatus, PuzzleImage } from '../types';
 import { BLANK_ID, getRowCol, getSlidePath } from '../utils/puzzle';
 import { Play, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Language, translations } from '../utils/i18n';
 
 interface PuzzleBoardProps {
   tiles: TileState[];
@@ -12,6 +13,7 @@ interface PuzzleBoardProps {
   onTileClick: (clickedPos: number) => void;
   onKeyDownMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onResume: () => void;
+  language: Language;
 }
 
 export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
@@ -22,7 +24,9 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
   onTileClick,
   onKeyDownMove,
   onResume,
+  language,
 }) => {
+  const t = translations[language];
   const boardRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -232,16 +236,16 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
               <div className="w-14 h-14 rounded-2xl bg-[#A3B18A]/25 border border-[#9A9E7C]/40 flex items-center justify-center text-[#3A5A40] mb-3">
                 <Play className="w-6 h-6 fill-[#3A5A40] ml-0.5" />
               </div>
-              <h3 className="text-2xl font-bold font-serif text-[#3A5A40] mb-1">Game Paused</h3>
+              <h3 className="text-2xl font-bold font-serif text-[#3A5A40] mb-1">{t.paused}</h3>
               <p className="text-xs font-sans text-[#7A746B] max-w-xs mb-4">
-                The timer is halted. Click below to continue your puzzle run.
+                {t.paused}
               </p>
               <button
                 id="btn-resume-game"
                 onClick={onResume}
                 className="px-6 h-11 rounded-full bg-[#A3B18A] hover:bg-[#8F9E77] text-[#FDFCF8] font-sans text-xs font-bold uppercase tracking-wider shadow-sm transition transform hover:scale-105 active:scale-95"
               >
-                Resume Game
+                {t.resumeGame}
               </button>
             </motion.div>
           )}

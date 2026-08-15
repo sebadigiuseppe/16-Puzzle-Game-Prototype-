@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Trophy, Award, Footprints, Timer, Zap, Sparkles, ArrowRight, RotateCcw } from 'lucide-react';
+import { 
+  Trophy, 
+  Award, 
+  Footprints, 
+  Timer, 
+  Zap, 
+  Sparkles, 
+  ArrowRight, 
+  RotateCcw,
+  CheckCircle2,
+  LogIn,
+  User as UserIcon
+} from 'lucide-react';
 import { Difficulty } from '../types';
 import { formatTime } from '../utils/puzzle';
 import { sounds } from '../utils/audio';
+import { Language, translations } from '../utils/i18n';
+import { User } from '../firebase';
 
 interface VictoryModalProps {
   isOpen: boolean;
   timeSeconds: number;
   moves: number;
   difficulty: Difficulty;
-  imageTheme: string;
   isNewRecord: boolean;
+  currentUser: User | null;
   initialPlayerName: string;
+  hasAutoSaved: boolean;
   onSaveScore: (playerName: string) => void;
+  onSignInAndSave: () => Promise<void>;
+  onOpenLeaderboard: () => void;
   onPlayAgain: () => void;
   onNextDifficulty?: () => void;
+  language: Language;
 }
 
 export const VictoryModal: React.FC<VictoryModalProps> = ({
@@ -23,62 +41,81 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   timeSeconds,
   moves,
   difficulty,
-  imageTheme,
   isNewRecord,
+  currentUser,
   initialPlayerName,
+  hasAutoSaved,
   onSaveScore,
+  onSignInAndSave,
+  onOpenLeaderboard,
   onPlayAgain,
   onNextDifficulty,
+  language,
 }) => {
   const [playerName, setPlayerName] = useState(initialPlayerName);
-  const [saved, setSaved] = useState(false);
+  const [manualSaved, setManualSaved] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showGuestInput, setShowGuestInput] = useState(false);
+  const t = translations[language];
 
   useEffect(() => {
     if (isOpen) {
-      setSaved(false);
-      setPlayerName(initialPlayerName);
+      setManualSaved(false);
+      setShowGuestInput(false);
+      setPlayerName(currentUser?.displayName || initialPlayerName);
       sounds.playVictory();
 
-      // Trigger festive celebration confetti
+      // Festive celebration confetti
       try {
         confetti({
-          particleCount: 100,
-          spread: 70,
+          particleCount: 110,
+          spread: 75,
           origin: { y: 0.6 },
-          colors: ['#f59e0b', '#d97706', '#10b981', '#ffffff', '#fbbf24'],
+          colors: ['#3A5A40', '#A3B18A', '#E0A96D', '#ffffff', '#588157'],
         });
         setTimeout(() => {
           confetti({
-            particleCount: 60,
+            particleCount: 65,
             angle: 60,
             spread: 55,
             origin: { x: 0 },
-            colors: ['#f59e0b', '#fbbf24', '#ffffff'],
+            colors: ['#A3B18A', '#588157', '#ffffff'],
           });
           confetti({
-            particleCount: 60,
+            particleCount: 65,
             angle: 120,
             spread: 55,
             origin: { x: 1 },
-            colors: ['#10b981', '#34d399', '#ffffff'],
+            colors: ['#3A5A40', '#E0A96D', '#ffffff'],
           });
-        }, 300);
+        }, 280);
       } catch {
-        // Ignore if confetti fails
+        // Confetti fallback
       }
     }
-  }, [isOpen, initialPlayerName]);
+  }, [isOpen, initialPlayerName, currentUser]);
 
   if (!isOpen) return null;
 
   const movesPerMin = timeSeconds > 0 ? Math.round((moves / timeSeconds) * 60) : 0;
 
-  const handleSaveAndLeaderboard = (e: React.FormEvent) => {
-    e.preventDefault();
-    const finalName = playerName.trim() || 'Champion Player';
-    onSaveScore(finalName);
-    setSaved(true);
+  const handleGoogleSignInClick = async () => {
+    setIsSigningIn(true);
+    try {
+      await onSignInAndSave();
+    } finally {
+      setIsSigningIn(false);
+    }
   };
+
+  const handleManualSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalName = playerName.trim() || 'Champion Solver';
+    onSaveScore(finalName);
+    setManualSaved(true);
+  };
+
+  const isSaved = hasAutoSaved || manualSaved;
 
   return (
     <div 
@@ -90,7 +127,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
         className="bg-[#FDFCF8] border border-[#DAD2C3] w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden text-[#4A453E] text-center p-6 sm:p-8 relative animate-in fade-in zoom-in duration-200"
       >
         {/* Victory Trophy Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-[#A3B18A]/30 border border-[#9A9E7C]/40 flex items-center justify-center mb-4 text-[#3A5A40] shadow-sm">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-[#A3B18A]/30 border border-[#9A9E7C]/40 flex items-center justify-center mb-3.5 text-[#3A5A40] shadow-sm">
           <Trophy className="w-8 h-8 text-[#3A5A40] animate-bounce" />
         </div>
 
@@ -99,25 +136,25 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
           {isNewRecord && (
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#3A5A40]/10 text-[#3A5A40] font-bold text-xs border border-[#3A5A40]/25 mb-2 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              NEW PERSONAL RECORD!
+              {t.newRecord}
             </span>
           )}
           <h2 className="text-3xl font-bold font-serif text-[#3A5A40] tracking-tight">
-            Puzzle Solved!
+            {t.victoryTitle}
           </h2>
           <p className="text-xs text-[#7A746B] mt-1">
-            Splendid work! You completed the 16-puzzle challenge.
+            {t.victorySubtitle}
           </p>
         </div>
 
         {/* Performance Results Grid */}
-        <div className="grid grid-cols-3 gap-2.5 my-5 bg-[#F5F2EA] p-3.5 rounded-2xl border border-[#E5E0D5]">
+        <div className="grid grid-cols-3 gap-2.5 my-4 bg-[#F5F2EA] p-3.5 rounded-2xl border border-[#E5E0D5]">
           
           {/* Time Stat */}
           <div className="flex flex-col items-center justify-center">
             <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
               <Timer className="w-3 h-3 text-[#3A5A40]" />
-              Time
+              {t.time}
             </span>
             <span className="text-lg sm:text-xl font-sans font-bold text-[#3A5A40] tabular-nums">
               {formatTime(timeSeconds)}
@@ -128,7 +165,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
           <div className="flex flex-col items-center justify-center border-x border-[#E5E0D5] px-2">
             <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
               <Footprints className="w-3 h-3 text-[#3A5A40]" />
-              Moves
+              {t.moves}
             </span>
             <span className="text-lg sm:text-xl font-sans font-bold text-[#4A453E] tabular-nums">
               {moves}
@@ -139,7 +176,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
           <div className="flex flex-col items-center justify-center">
             <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
               <Zap className="w-3 h-3 text-[#7E8260]" />
-              Pace
+              {t.movesPerMin.split(' ')[0]}
             </span>
             <span className="text-lg sm:text-xl font-sans font-bold text-[#4A453E] tabular-nums">
               {movesPerMin} <span className="text-[10px] font-normal text-[#7A746B]">m/m</span>
@@ -149,63 +186,152 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
         </div>
 
         {/* Mode Tag */}
-        <div className="flex items-center justify-center gap-2 text-xs text-[#7A746B] mb-5">
-          <span>Difficulty: <strong className="text-[#4A453E] capitalize">{difficulty === 'medium' ? 'Standard' : difficulty}</strong></span>
-          <span>•</span>
-          <span>Theme: <strong className="text-[#4A453E]">{imageTheme}</strong></span>
+        <div className="flex items-center justify-center gap-2 text-xs text-[#7A746B] mb-4">
+          <span>{t.difficulty}: <strong className="text-[#3A5A40] capitalize">{difficulty === 'medium' ? 'Standard' : difficulty}</strong></span>
         </div>
 
-        {/* Player Name Leaderboard Submission Form */}
-        <form onSubmit={handleSaveAndLeaderboard} className="space-y-3">
-          <div className="text-left">
-            <label htmlFor="player-name-input" className="block text-xs font-semibold text-[#4A453E] mb-1.5 flex items-center gap-1">
-              <Award className="w-3.5 h-3.5 text-[#3A5A40]" />
-              Enter Player Name for Leaderboard:
-            </label>
-            <input
-              id="player-name-input"
-              type="text"
-              maxLength={24}
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Your name or handle"
-              className="w-full px-3.5 py-2.5 bg-[#F5F2EA] border border-[#DAD2C3] focus:border-[#3A5A40] rounded-xl text-sm text-[#4A453E] placeholder-[#9A9E7C] focus:outline-none transition shadow-inner font-medium"
-            />
+        {/* Score Persistence & Authentication Section */}
+        {currentUser || isSaved ? (
+          /* Case 1: User is Logged In -> Auto-saved or Saved state */
+          <div className="mb-4 bg-[#A3B18A]/20 border border-[#9A9E7C]/40 p-3.5 rounded-2xl text-left flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#3A5A40]/15 flex items-center justify-center shrink-0 border border-[#3A5A40]/25 overflow-hidden">
+              {currentUser?.photoURL ? (
+                <img 
+                  src={currentUser.photoURL} 
+                  alt={currentUser.displayName || 'Player'} 
+                  className="w-full h-full object-cover" 
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 text-[#3A5A40]" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-[#3A5A40] flex items-center gap-1.5">
+                <span>{t.autoSavedBadge}</span>
+              </div>
+              <div className="text-[11px] text-[#7A746B] truncate">
+                {t.savedAs} <strong className="text-[#4A453E]">{currentUser?.displayName || playerName || 'Player'}</strong>
+              </div>
+            </div>
           </div>
+        ) : (
+          /* Case 2: User is NOT Logged In -> Prompt to Sign In with Google & Auto-Save */
+          <div className="mb-4 bg-[#F5F2EA] border border-[#DAD2C3] p-4 rounded-2xl text-left space-y-3">
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#3A5A40]/10 flex items-center justify-center shrink-0 text-[#3A5A40] mt-0.5">
+                <LogIn className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#4A453E]">
+                  {t.signInToSavePrompt}
+                </p>
+                <p className="text-[11px] text-[#7A746B] mt-0.5">
+                  Sign in once to record this win and track your rank against players worldwide.
+                </p>
+              </div>
+            </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            {/* Google Sign In & Auto-Save Button */}
             <button
-              id="btn-save-score"
-              type="submit"
-              disabled={saved}
-              className="flex-1 py-3 px-4 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
-            >
-              <Trophy className="w-4 h-4" />
-              {saved ? 'Saved to Leaderboard ✓' : 'Save to Leaderboard'}
-            </button>
-
-            <button
-              id="btn-play-again"
+              id="btn-victory-google-login"
               type="button"
-              onClick={onPlayAgain}
-              className="py-3 px-4 rounded-xl bg-[#EBE7DF] hover:bg-[#DAD2C3] text-[#4A453E] font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5"
+              onClick={handleGoogleSignInClick}
+              disabled={isSigningIn}
+              className="w-full py-2.5 px-4 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] font-sans font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
             >
-              <RotateCcw className="w-4 h-4 text-[#7E8260]" />
-              Play Again
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M12 5c1.54 0 2.9.54 3.97 1.43l2.97-2.97C17.06 1.71 14.7 1 12 1 7.42 1 3.51 3.58 1.63 7.3l3.57 2.77C6.07 7.04 8.78 5 12 5z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M23.49 12.28c0-.82-.07-1.6-.21-2.28H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.71 2.88c2.16-2 3.71-4.94 3.71-8.69z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.2 14.93c-.22-.67-.35-1.38-.35-2.12s.13-1.45.35-2.12L1.63 7.92C.59 9.99 0 12.3 0 14.81s.59 4.82 1.63 6.89l3.57-2.77z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23.63c3.24 0 5.95-1.07 7.94-2.92l-3.71-2.88c-1.07.72-2.45 1.16-4.23 1.16-3.22 0-5.93-2.04-6.8-4.93L1.63 16.83C3.51 20.55 7.42 23.63 12 23.63z"
+                />
+              </svg>
+              <span>{isSigningIn ? 'Signing in...' : t.signInAndSaveBtn}</span>
             </button>
+
+            {/* Optional Guest Name Form */}
+            {!showGuestInput ? (
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowGuestInput(true)}
+                  className="text-[11px] text-[#7A746B] hover:text-[#3A5A40] underline underline-offset-2 transition"
+                >
+                  {t.guestSaveToggle}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleManualSave} className="space-y-2 pt-1 border-t border-[#E5E0D5]">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={24}
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    placeholder={t.enterName}
+                    className="flex-1 px-3 py-1.5 bg-[#FDFCF8] border border-[#DAD2C3] focus:border-[#3A5A40] rounded-xl text-xs text-[#4A453E] placeholder-[#9A9E7C] focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-1.5 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-bold text-xs"
+                  >
+                    {t.saveScoreBtn}
+                  </button>
+                </div>
+              </form>
+            )}
+
           </div>
+        )}
 
-          {onNextDifficulty && difficulty !== 'master' && (
-            <button
-              id="btn-next-difficulty"
-              type="button"
-              onClick={onNextDifficulty}
-              className="w-full py-2 text-xs text-[#3A5A40] hover:text-[#2E4833] font-semibold flex items-center justify-center gap-1 transition"
-            >
-              Try next harder difficulty ({difficulty === 'hard' ? 'Master • No Numbers' : 'Next Level'}) <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </form>
+        {/* Primary Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          
+          <button
+            id="btn-victory-view-leaderboard"
+            type="button"
+            onClick={onOpenLeaderboard}
+            className="py-3 px-4 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5 flex-1"
+          >
+            <Trophy className="w-4 h-4" />
+            <span>{t.viewLeaderboard}</span>
+          </button>
+
+          <button
+            id="btn-play-again"
+            type="button"
+            onClick={onPlayAgain}
+            className="py-3 px-4 rounded-xl bg-[#EBE7DF] hover:bg-[#DAD2C3] text-[#4A453E] font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 flex-1"
+          >
+            <RotateCcw className="w-4 h-4 text-[#7E8260]" />
+            <span>{t.playAgain}</span>
+          </button>
+
+        </div>
+
+        {/* Next Difficulty Link */}
+        {onNextDifficulty && difficulty !== 'master' && (
+          <button
+            id="btn-next-difficulty"
+            type="button"
+            onClick={onNextDifficulty}
+            className="w-full mt-3 py-2 text-xs text-[#3A5A40] hover:text-[#2E4833] font-semibold flex items-center justify-center gap-1 transition"
+          >
+            {t.nextChallenge} ({difficulty === 'hard' ? 'Master' : 'Next'}) <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        )}
 
       </div>
     </div>

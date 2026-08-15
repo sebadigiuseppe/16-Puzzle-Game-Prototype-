@@ -61,18 +61,25 @@ export async function signOutPlayer(): Promise<void> {
   await fbSignOut(auth);
 }
 
-// Save game score to Firebase Firestore
+// Save game score to Firebase Firestore (preventing duplicates)
 export async function saveScoreToCloud(score: ScoreRecord, user?: User | null): Promise<string | null> {
   try {
-    const scoresRef = collection(db, 'leaderboard_scores');
-    const docRef = await addDoc(scoresRef, {
+    // Generate a deterministic doc ID for the score record if possible to prevent duplicates
+    const safeDocId = score.id.startsWith('score-')
+      ? `${user?.uid || score.playerName.replace(/\s+/g, '_')}_${score.difficulty}_${Math.round(score.timeInSeconds * 10)}_${score.moves}_${score.date}`
+      : score.id;
+
+    const scoreDocRef = doc(db, 'leaderboard_scores', safeDocId);
+    await setDoc(scoreDocRef, {
       ...score,
+      id: safeDocId,
       userId: user ? user.uid : null,
       photoURL: user?.photoURL || null,
       createdAt: serverTimestamp(),
       syncedToCloud: true,
-    });
-    return docRef.id;
+    }, { merge: true });
+
+    return safeDocId;
   } catch (error) {
     console.warn('Failed to save score to cloud Firestore:', error);
     return null;

@@ -1,25 +1,34 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Trophy, 
   Volume2, 
   VolumeX, 
   HelpCircle, 
-  Sparkles,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Menu,
+  X,
+  ChevronDown,
+  Sliders
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { User } from '../firebase';
+import { Difficulty } from '../types';
+import { Language, translations } from '../utils/i18n';
+import { LanguageSelector } from './LanguageSelector';
 
 interface NavbarProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onOpenLeaderboard: () => void;
   onOpenHelp: () => void;
-  imageName: string;
   currentUser: User | null;
   onSignInGoogle: () => void;
   onSignOutGoogle: () => void;
+  currentLanguage: Language;
+  onSelectLanguage: (lang: Language) => void;
+  difficulty: Difficulty;
+  onChangeDifficulty: (diff: Difficulty) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,63 +36,230 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleSound,
   onOpenLeaderboard,
   onOpenHelp,
-  imageName,
   currentUser,
   onSignInGoogle,
   onSignOutGoogle,
+  currentLanguage,
+  onSelectLanguage,
+  difficulty,
+  onChangeDifficulty,
 }) => {
+  const t = translations[currentLanguage];
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDiffOpen, setIsDiffOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const diffRef = useRef<HTMLDivElement>(null);
+
+  // Close menus on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+      if (diffRef.current && !diffRef.current.contains(event.target as Node)) {
+        setIsDiffOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const difficultyLabels: Record<Difficulty, string> = {
+    easy: t.diffEasy,
+    medium: t.diffMedium,
+    hard: t.diffHard,
+    master: t.diffMaster,
+  };
+
   return (
     <header id="app-navbar" className="w-full bg-[#F5F2EA]/95 backdrop-blur-md border-b border-[#E5E0D5] text-[#4A453E] sticky top-0 z-30 px-4 py-3 shadow-xs">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 flex-wrap">
         
-        {/* Brand & Theme Title */}
+        {/* Brand & Left Navigation */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#A3B18A]/25 border border-[#9A9E7C]/40 flex items-center justify-center text-[#3A5A40] font-black shadow-inner">
-            <Sparkles className="w-5 h-5 text-[#3A5A40]" />
+          
+          {/* Hamburger Menu Trigger Button */}
+          <div className="relative" ref={menuRef}>
+            <button
+              id="btn-hamburger-menu"
+              type="button"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              title="Menu"
+              aria-label="Toggle Navigation Menu"
+              className="w-9 h-9 rounded-xl bg-[#A3B18A]/25 hover:bg-[#A3B18A]/40 border border-[#9A9E7C]/40 flex items-center justify-center text-[#3A5A40] transition shadow-xs cursor-pointer"
+            >
+              {isMenuOpen ? (
+                <X className="w-5 h-5 text-[#3A5A40]" />
+              ) : (
+                <Menu className="w-5 h-5 text-[#3A5A40]" />
+              )}
+            </button>
+
+            {/* Hamburger Dropdown Popover */}
+            {isMenuOpen && (
+              <div
+                id="hamburger-dropdown-menu"
+                className="absolute left-0 mt-2 w-64 bg-[#FDFCF8] border border-[#DAD2C3] rounded-2xl shadow-xl z-50 p-2 overflow-hidden animate-in fade-in zoom-in-95 duration-100 font-sans"
+              >
+                <div className="px-3 py-2 border-b border-[#E5E0D5] text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] flex items-center justify-between">
+                  <span>Menu</span>
+                  <span className="text-[11px] font-mono text-[#3A5A40]">{t.gridSize}</span>
+                </div>
+
+                <div className="py-1.5 flex flex-col gap-1">
+                  
+                  {/* Leaderboard */}
+                  <button
+                    id="menu-btn-leaderboard"
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenLeaderboard();
+                    }}
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] hover:text-[#3A5A40] font-medium text-xs flex items-center gap-2.5 transition"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 flex items-center justify-center">
+                      <Trophy className="w-4 h-4 text-[#3A5A40]" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs">{t.leaderboard}</div>
+                      <div className="text-[10px] text-[#7A746B]">{t.rankings}</div>
+                    </div>
+                  </button>
+
+                  {/* Sound Toggle */}
+                  <button
+                    id="menu-btn-sound"
+                    type="button"
+                    onClick={() => {
+                      sounds.enabled = !soundEnabled;
+                      onToggleSound();
+                    }}
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] font-medium text-xs flex items-center justify-between transition"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 flex items-center justify-center">
+                        {soundEnabled ? (
+                          <Volume2 className="w-4 h-4 text-[#3A5A40]" />
+                        ) : (
+                          <VolumeX className="w-4 h-4 text-[#9A9E7C]" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs">Audio Effects</div>
+                        <div className="text-[10px] text-[#7A746B]">
+                          {soundEnabled ? 'Enabled' : 'Muted'}
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      soundEnabled ? 'bg-[#3A5A40]/15 text-[#3A5A40]' : 'bg-[#EBE7DF] text-[#7A746B]'
+                    }`}>
+                      {soundEnabled ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+
+                  {/* How to Play Help */}
+                  <button
+                    id="menu-btn-help"
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenHelp();
+                    }}
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] hover:text-[#3A5A40] font-medium text-xs flex items-center gap-2.5 transition"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[#7E8260]/15 flex items-center justify-center">
+                      <HelpCircle className="w-4 h-4 text-[#7E8260]" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs">{t.howToPlay}</div>
+                      <div className="text-[10px] text-[#7A746B]">Rules & Tips</div>
+                    </div>
+                  </button>
+
+                  {/* Language Selector Row inside Menu */}
+                  <div className="pt-2 mt-1 border-t border-[#E5E0D5] px-3 pb-1 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-[#7A746B]">Language</span>
+                    <LanguageSelector
+                      currentLanguage={currentLanguage}
+                      onSelectLanguage={onSelectLanguage}
+                    />
+                  </div>
+
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <h1 className="text-xl font-bold font-serif tracking-tight text-[#3A5A40] flex items-center gap-2">
-              Sliding Puzzles
+
+          {/* App Title & Difficulty Button at the side of 4x4 */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold font-serif tracking-tight text-[#3A5A40]">
+                {t.appTitle}
+              </h1>
+              
+              {/* 4x4 Grid Badge */}
               <span className="text-[11px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#A3B18A]/25 text-[#3A5A40] border border-[#9A9E7C]/40 uppercase tracking-wider">
-                4×4
+                {t.gridSize}
               </span>
-            </h1>
-            <p className="text-xs font-sans text-[#7A746B] hidden sm:block">
-              Theme: <span className="text-[#4A453E] font-medium">{imageName}</span>
-            </p>
+
+              {/* Difficulty Selector Button at the side of the 4x4 icon */}
+              <div className="relative" ref={diffRef}>
+                <button
+                  id="btn-difficulty-toggle"
+                  type="button"
+                  onClick={() => setIsDiffOpen(!isDiffOpen)}
+                  className="px-2.5 py-1 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#3A5A40] border border-[#DAD2C3] font-sans font-bold text-xs transition flex items-center gap-1.5 shadow-2xs"
+                  title="Change Difficulty"
+                >
+                  <Sliders className="w-3 h-3 text-[#7E8260]" />
+                  <span>{difficultyLabels[difficulty]}</span>
+                  <ChevronDown className="w-3 h-3 text-[#7A746B]" />
+                </button>
+
+                {/* Difficulty Popover Dropdown */}
+                {isDiffOpen && (
+                  <div
+                    id="difficulty-dropdown-menu"
+                    className="absolute left-0 mt-1.5 w-44 bg-[#FDFCF8] border border-[#DAD2C3] rounded-2xl shadow-xl z-50 p-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-100 font-sans"
+                  >
+                    <div className="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] border-b border-[#E5E0D5]">
+                      {t.difficulty}
+                    </div>
+                    <div className="py-1 flex flex-col gap-0.5">
+                      {(['easy', 'medium', 'hard', 'master'] as Difficulty[]).map((d) => (
+                        <button
+                          key={d}
+                          id={`btn-diff-choice-${d}`}
+                          type="button"
+                          onClick={() => {
+                            onChangeDifficulty(d);
+                            setIsDiffOpen(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+                            difficulty === d
+                              ? 'bg-[#3A5A40] text-[#FDFCF8]'
+                              : 'text-[#4A453E] hover:bg-[#F5F2EA]'
+                          }`}
+                        >
+                          <span>{difficultyLabels[d]}</span>
+                          {d === 'master' && (
+                            <span className="text-[10px] opacity-75 font-normal">Blind</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-
-          {/* Sound Toggle */}
-          <button
-            id="btn-toggle-sound"
-            onClick={() => {
-              sounds.enabled = !soundEnabled;
-              onToggleSound();
-            }}
-            title={soundEnabled ? "Mute sounds" : "Unmute sounds"}
-            className="p-2 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#E5E0D5] transition shadow-xs"
-          >
-            {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-[#3A5A40]" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-[#9A9E7C]" />
-            )}
-          </button>
-
-          {/* Leaderboard Button */}
-          <button
-            id="btn-leaderboard"
-            onClick={onOpenLeaderboard}
-            title="High Scores Leaderboard & Stats"
-            className="px-3.5 py-2 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-semibold text-xs shadow-sm transition flex items-center gap-1.5 border border-[#3A5A40]"
-          >
-            <Trophy className="w-4 h-4 text-[#FDFCF8]" />
-            <span>Leaderboard</span>
-          </button>
+        {/* Right Action Controls: Profile / Sign-in Only */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
 
           {/* Google Auth Button / User Profile Card */}
           {currentUser ? (
@@ -98,13 +274,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               ) : (
                 <UserIcon className="w-4 h-4 text-[#3A5A40]" />
               )}
-              <span className="font-semibold text-[#4A453E] max-w-[90px] truncate hidden sm:inline">
+              <span className="font-semibold text-[#4A453E] max-w-[110px] truncate">
                 {currentUser.displayName?.split(' ')[0] || 'Player'}
               </span>
               <button
                 id="btn-sign-out"
                 onClick={onSignOutGoogle}
-                title="Sign out of Google"
+                title={t.signOut}
                 className="p-1 hover:bg-[#EBE7DF] rounded-lg text-[#7A746B] hover:text-[#4A453E] transition"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -114,7 +290,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-google-login"
               onClick={onSignInGoogle}
-              title="Sign in with Google to sync scores"
+              title={t.signIn}
               className="px-3 py-2 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] font-sans font-semibold text-xs transition flex items-center gap-1.5 shadow-xs"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -135,19 +311,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   d="M12 23.63c3.24 0 5.95-1.07 7.94-2.92l-3.71-2.88c-1.07.72-2.45 1.16-4.23 1.16-3.22 0-5.93-2.04-6.8-4.93L1.63 16.83C3.51 20.55 7.42 23.63 12 23.63z"
                 />
               </svg>
-              <span>Sign In</span>
+              <span>{t.signIn}</span>
             </button>
           )}
-
-          {/* How to Play */}
-          <button
-            id="btn-help"
-            onClick={onOpenHelp}
-            title="How to play instructions"
-            className="p-2 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#7A746B] hover:text-[#4A453E] border border-[#E5E0D5] transition shadow-xs"
-          >
-            <HelpCircle className="w-4 h-4 text-[#7E8260]" />
-          </button>
 
         </div>
       </div>
