@@ -33,6 +33,28 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "playerName", "timeInSeconds", "moves", "difficulty", "date"]
+    },
+    "CommunityPicture": {
+      "title": "CommunityPicture",
+      "description": "Player submitted pet picture for the daily and community puzzle pool",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "petName": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "string" },
+        "submitterName": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "animalType": { "type": "string" },
+        "qualityScore": { "type": "number" },
+        "aiComment": { "type": "string" },
+        "status": { "type": "string", "enum": ["approved", "rejected", "pending"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "timesUsedAsDaily": { "type": "number" },
+        "lastUsedDate": { "type": "string" }
+      },
+      "required": ["id", "petName", "imageUrl", "submitterName", "status"]
     }
   },
   "firestore": {
@@ -43,6 +65,10 @@
     "/leaderboard_scores/{scoreId}": {
       "schema": { "$ref": "#/entities/LeaderboardScore" },
       "description": "Global leaderboard score records"
+    },
+    "/community_pictures/{pictureId}": {
+      "schema": { "$ref": "#/entities/CommunityPicture" },
+      "description": "Community submitted animal photos pool for daily puzzles"
     }
   }
 }

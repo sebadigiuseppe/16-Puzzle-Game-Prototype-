@@ -57,26 +57,11 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
         {/* Controls */}
         <div className="space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[#9A9E7C]">{t.controls}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-            <div className="bg-[#F5F2EA] p-3.5 rounded-2xl border border-[#E5E0D5]">
-              <div className="font-bold text-[#4A453E] mb-1">{t.clickMultiSlide}</div>
-              <p className="text-[#7A746B] text-[11px] leading-relaxed">
-                {t.clickMultiSlideDesc}
-              </p>
-            </div>
-
-            <div className="bg-[#F5F2EA] p-3.5 rounded-2xl border border-[#E5E0D5]">
-              <div className="font-bold text-[#4A453E] mb-1">{t.keyboardControls}</div>
-              <div className="flex items-center gap-1 my-1.5">
-                <span className="px-1.5 py-0.5 rounded-md bg-[#EBE7DF] border border-[#DAD2C3] font-sans font-semibold text-[10px] text-[#3A5A40]">W / <ArrowUp className="w-2.5 h-2.5 inline" /></span>
-                <span className="px-1.5 py-0.5 rounded-md bg-[#EBE7DF] border border-[#DAD2C3] font-sans font-semibold text-[10px] text-[#3A5A40]">A / <ArrowLeft className="w-2.5 h-2.5 inline" /></span>
-                <span className="px-1.5 py-0.5 rounded-md bg-[#EBE7DF] border border-[#DAD2C3] font-sans font-semibold text-[10px] text-[#3A5A40]">S / <ArrowDown className="w-2.5 h-2.5 inline" /></span>
-                <span className="px-1.5 py-0.5 rounded-md bg-[#EBE7DF] border border-[#DAD2C3] font-sans font-semibold text-[10px] text-[#3A5A40]">D / <ArrowRight className="w-2.5 h-2.5 inline" /></span>
-              </div>
-              <p className="text-[#7A746B] text-[11px] leading-relaxed">
-                {t.keyboardControlsDesc}
-              </p>
-            </div>
+          <div className="bg-[#F5F2EA] p-3.5 rounded-2xl border border-[#E5E0D5] text-xs">
+            <div className="font-bold text-[#4A453E] mb-1">{t.clickMultiSlide}</div>
+            <p className="text-[#7A746B] text-[11px] leading-relaxed">
+              {t.clickMultiSlideDesc}
+            </p>
           </div>
         </div>
 

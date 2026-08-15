@@ -20,7 +20,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
-import { ScoreRecord } from './types';
+import { ScoreRecord, CommunityPetPicture } from './types';
 
 // Initialize Firebase App instance
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -118,5 +118,76 @@ export async function fetchCloudLeaderboard(limitCount = 100): Promise<ScoreReco
   }
 }
 
+// Save Community Pet Picture to Firestore
+export async function saveCommunityPictureToCloud(pet: CommunityPetPicture, user?: User | null): Promise<string | null> {
+  try {
+    const docRef = doc(db, 'community_pictures', pet.id);
+    await setDoc(docRef, {
+      ...pet,
+      authorUid: user ? user.uid : (pet.authorUid || null),
+      createdAt: pet.createdAt || new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    return pet.id;
+  } catch (error) {
+    console.warn('Failed to save pet picture to cloud:', error);
+    return null;
+  }
+}
+
+// Fetch Approved Community Pet Pictures from Firestore
+export async function fetchCloudCommunityPictures(limitCount = 60): Promise<CommunityPetPicture[]> {
+  try {
+    const petsRef = collection(db, 'community_pictures');
+    const q = query(petsRef, limit(limitCount));
+    const snapshot = await getDocs(q);
+
+    const pets: CommunityPetPicture[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.status === 'approved' || !data.status) {
+        pets.push({
+          id: docSnap.id,
+          petName: data.petName || 'Cute Pet',
+          animalType: data.animalType || 'Animal Companion',
+          description: data.description || '',
+          location: data.location || '',
+          submitterName: data.submitterName || 'Community Member',
+          authorUid: data.authorUid || null,
+          imageUrl: data.imageUrl || '',
+          qualityScore: data.qualityScore || 9,
+          aiComment: data.aiComment || 'Approved for puzzle challenge.',
+          status: 'approved',
+          createdAt: data.createdAt || new Date().toISOString(),
+          timesUsedAsDaily: data.timesUsedAsDaily || 0,
+          lastUsedDate: data.lastUsedDate || null,
+          usedDates: data.usedDates || [],
+          isPreset: data.isPreset || false,
+        });
+      }
+    });
+
+    return pets;
+  } catch (error) {
+    console.warn('Failed to fetch cloud community pictures:', error);
+    return [];
+  }
+}
+
+// Update Community Picture Usage in Firestore
+export async function updateCloudPictureUsage(pictureId: string, lastUsedDate: string, timesUsed: number): Promise<void> {
+  try {
+    const docRef = doc(db, 'community_pictures', pictureId);
+    await setDoc(docRef, {
+      lastUsedDate,
+      timesUsedAsDaily: timesUsed,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+  } catch (e) {
+    console.warn('Could not update cloud picture usage:', e);
+  }
+}
+
 export { onAuthStateChanged };
 export type { User };
+

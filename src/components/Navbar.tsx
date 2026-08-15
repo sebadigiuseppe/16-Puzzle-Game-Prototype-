@@ -10,7 +10,9 @@ import {
   X,
   ChevronDown,
   Sliders,
-  Sparkles
+  Sparkles,
+  Heart,
+  Plus
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { User } from '../firebase';
@@ -23,6 +25,7 @@ interface NavbarProps {
   onToggleSound: () => void;
   onOpenLeaderboard: () => void;
   onOpenHelp: () => void;
+  onOpenUpload?: () => void;
   currentUser: User | null;
   onSignInGoogle: () => void;
   onSignOutGoogle: () => void;
@@ -39,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleSound,
   onOpenLeaderboard,
   onOpenHelp,
+  onOpenUpload,
   currentUser,
   onSignInGoogle,
   onSignOutGoogle,
@@ -75,8 +79,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     hard: t.diffHard,
     master: t.diffMaster,
   };
-
-  const activeLang = LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0];
 
   return (
     <header id="app-navbar" className="w-full bg-[#F5F2EA]/95 backdrop-blur-md border-b border-[#E5E0D5] text-[#4A453E] sticky top-0 z-30 px-4 py-3 shadow-xs">
@@ -121,6 +123,34 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <div className="py-1.5 flex flex-col gap-1">
                   
+                  {/* Submit Your Pet */}
+                  {onOpenUpload && (
+                    <button
+                      id="menu-btn-pet-submit"
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onOpenUpload();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] hover:text-[#3A5A40] font-medium text-xs flex items-center justify-between transition cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/15 flex items-center justify-center shrink-0">
+                          <Heart className="w-4 h-4 text-[#3A5A40]" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-xs">Submit Your Pet</div>
+                          <div className="text-[10px] text-[#7A746B] leading-tight">
+                            Submit a picture of your pet to show on a puzzle
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3A5A40]/15 text-[#3A5A40] shrink-0 ml-1">
+                        🐾 Send
+                      </span>
+                    </button>
+                  )}
+
                   {/* Leaderboard */}
                   <button
                     id="menu-btn-leaderboard"
@@ -198,12 +228,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </button>
 
-                  {/* Language Selector Row inside Menu - clean inline selector so it never clips or goes behind */}
-                  <div className="pt-2.5 mt-1 border-t border-[#E5E0D5] px-3 pb-1.5 flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#7A746B]">Language</span>
-                      <span className="text-[11px] font-bold text-[#3A5A40]">{activeLang.nativeLabel}</span>
-                    </div>
+                  {/* Language Flags Row inside Menu */}
+                  <div className="pt-2 mt-1 border-t border-[#E5E0D5] px-1 pb-1">
                     <LanguageSelector
                       currentLanguage={currentLanguage}
                       onSelectLanguage={onSelectLanguage}

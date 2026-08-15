@@ -11,7 +11,7 @@ interface PuzzleBoardProps {
   showNumbers: boolean;
   status: GameStatus;
   onTileClick: (clickedPos: number) => void;
-  onKeyDownMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
+  onKeyDownMove?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onResume: () => void;
   language: Language;
 }
@@ -34,30 +34,6 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
   const blankTile = tiles.find(t => t.isBlank || t.id === BLANK_ID);
   const blankPos = blankTile ? blankTile.currentPos : 15;
 
-  // Keyboard navigation handler
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (status !== 'playing' && status !== 'idle') return;
-
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-      e.preventDefault();
-      onKeyDownMove('up'); // Move tile below blank upward
-    } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-      e.preventDefault();
-      onKeyDownMove('down'); // Move tile above blank downward
-    } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-      e.preventDefault();
-      onKeyDownMove('left'); // Move tile to the right of blank leftward
-    } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-      e.preventDefault();
-      onKeyDownMove('right'); // Move tile to the left of blank rightward
-    }
-  }, [status, onKeyDownMove]);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-
   // Touch swipe support
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
@@ -69,7 +45,7 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current || e.changedTouches.length === 0) return;
+    if (!touchStartRef.current || e.changedTouches.length === 0 || !onKeyDownMove) return;
     const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
     const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
     touchStartRef.current = null;

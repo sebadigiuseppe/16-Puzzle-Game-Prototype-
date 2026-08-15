@@ -10,7 +10,8 @@ import {
   RotateCcw,
   CheckCircle2,
   LogIn,
-  Flame
+  Flame,
+  Heart
 } from 'lucide-react';
 import { Difficulty, ScoreBreakdown } from '../types';
 import { formatTime, calculateGameScore } from '../utils/puzzle';
@@ -32,6 +33,7 @@ interface VictoryModalProps {
   onOpenLeaderboard: () => void;
   onPlayAgain: () => void;
   onNextDifficulty?: () => void;
+  onOpenUpload?: () => void;
   language: Language;
   earnedScore?: number;
   totalCumulativeScore?: number;
@@ -52,6 +54,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   onOpenLeaderboard,
   onPlayAgain,
   onNextDifficulty,
+  onOpenUpload,
   language,
   earnedScore,
   totalCumulativeScore,
@@ -366,7 +369,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
             id="btn-victory-view-leaderboard"
             type="button"
             onClick={onOpenLeaderboard}
-            className="py-3 px-4 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5 flex-1"
+            className="py-3 px-4 rounded-xl bg-[#3A5A40] hover:bg-[#2E4833] text-[#FDFCF8] font-sans font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-1.5 flex-1 cursor-pointer"
           >
             <Trophy className="w-4 h-4" />
             <span>{t.viewLeaderboard}</span>
@@ -376,13 +379,26 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
             id="btn-play-again"
             type="button"
             onClick={onPlayAgain}
-            className="py-3 px-4 rounded-xl bg-[#EBE7DF] hover:bg-[#DAD2C3] text-[#4A453E] font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 flex-1"
+            className="py-3 px-4 rounded-xl bg-[#EBE7DF] hover:bg-[#DAD2C3] text-[#4A453E] font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 flex-1 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4 text-[#7E8260]" />
             <span>{t.playAgain}</span>
           </button>
 
         </div>
+
+        {/* Submit Your Pet Button */}
+        {onOpenUpload && (
+          <button
+            id="btn-victory-submit-pet"
+            type="button"
+            onClick={onOpenUpload}
+            className="w-full mt-2 py-2 px-3 rounded-xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#3A5A40] border border-[#DAD2C3] font-sans font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <Heart className="w-3.5 h-3.5 text-[#3A5A40] fill-[#3A5A40]/20" />
+            <span>Submit Your Pet for Daily Rotation</span>
+          </button>
+        )}
 
         {/* Next Difficulty Link */}
         {onNextDifficulty && difficulty !== 'master' && (

@@ -18,7 +18,7 @@ export const LANGUAGES: LanguageOption[] = [
 
 export const translations = {
   en: {
-    appTitle: 'Sliding Puzzles',
+    appTitle: 'Daily Sliding Puzzle',
     gridSize: '4×4',
     theme: 'Theme:',
     themeName: 'Horse Portrait',
@@ -36,7 +36,7 @@ export const translations = {
     shuffleBoard: 'Shuffle Board',
     referencePhoto: 'Reference Photo',
     highScores: 'High Scores',
-    footerTitle: 'Sliding Puzzles • 4×4 Solvable Board',
+    footerTitle: 'Daily Sliding Puzzle • 4×4 Solvable Board',
     footerSub: 'Live Timer Stopwatch & Cloud High Score Leaderboard Tracker',
     
     // Difficulty labels
@@ -60,7 +60,7 @@ export const translations = {
     close: 'Close',
 
     // Instructions Modal
-    instructionsTitle: 'How to Play Sliding Puzzles',
+    instructionsTitle: 'How to Play Daily Sliding Puzzle',
     instructionsSubtitle: 'Rules, controls & speed-solving tips',
     objective: 'Objective',
     objectiveDesc: 'The 16-puzzle (classic 15-puzzle) consists of a 4×4 grid of 15 sliding image slices and one empty space. Slide the tiles into the blank space until the entire horse portrait is restored and numbers 1 through 15 are in order!',
@@ -136,9 +136,11 @@ export const translations = {
     totalEarned: 'Points Earned',
     stackedTotal: 'Stacked Total',
     points: 'pts',
+    showStats: 'Show Stats (Time, Moves, Pace)',
+    hideStats: 'Hide Stats',
   },
   es: {
-    appTitle: 'Puzles Deslizantes',
+    appTitle: 'Puzle Deslizante Diario',
     gridSize: '4×4',
     theme: 'Tema:',
     themeName: 'Retrato de Caballo',
@@ -156,7 +158,7 @@ export const translations = {
     shuffleBoard: 'Barajar Tablero',
     referencePhoto: 'Foto de Referencia',
     highScores: 'Mejores Puntuaciones',
-    footerTitle: 'Puzles Deslizantes • Tablero Soluble 4×4',
+    footerTitle: 'Puzle Deslizante Diario • Tablero Soluble 4×4',
     footerSub: 'Cronómetro en vivo y tabla de clasificación global en la nube',
 
     diffEasy: 'Fácil (3 Movs)',
@@ -176,7 +178,7 @@ export const translations = {
     tileGuideDesc: 'Para resolver el puzle, ordena las casillas del 1 al 15, dejando libre el espacio inferior derecho.',
     close: 'Cerrar',
 
-    instructionsTitle: 'Cómo Jugar Puzles Deslizantes',
+    instructionsTitle: 'Cómo Jugar Puzle Deslizante Diario',
     instructionsSubtitle: 'Reglas, controles y consejos de velocidad',
     objective: 'Objetivo',
     objectiveDesc: 'El puzle de 16 casillas (clásico juego del 15) cuenta con una cuadrícula 4×4 con 15 piezas y un espacio vacío. ¡Desliza las piezas hasta restaurar el retrato y ordenar los números del 1 al 15!',
@@ -250,9 +252,11 @@ export const translations = {
     totalEarned: 'Puntos Ganados',
     stackedTotal: 'Total Acumulado',
     points: 'pts',
+    showStats: 'Mostrar estadísticas (Tiempo, Movs, Ritmo)',
+    hideStats: 'Ocultar estadísticas',
   },
   pt: {
-    appTitle: 'Quebra-Cabeças Deslizantes',
+    appTitle: 'Quebra-Cabeça Deslizante Diário',
     gridSize: '4×4',
     theme: 'Tema:',
     themeName: 'Retrato de Cavalo',
@@ -270,7 +274,7 @@ export const translations = {
     shuffleBoard: 'Embaralhar Tabuleiro',
     referencePhoto: 'Foto de Referência',
     highScores: 'Melhores Pontuações',
-    footerTitle: 'Quebra-Cabeças Deslizantes • Tabuleiro Solucionável 4×4',
+    footerTitle: 'Quebra-Cabeça Deslizante Diário • Tabuleiro Solucionável 4×4',
     footerSub: 'Cronômetro ao vivo e ranking global na nuvem',
 
     diffEasy: 'Fácil (3 Movs)',
@@ -290,7 +294,7 @@ export const translations = {
     tileGuideDesc: 'Para resolver o quebra-cabeça, organize as peças de 1 a 15, deixando o canto inferior direito vazio.',
     close: 'Fechar',
 
-    instructionsTitle: 'Como Jogar Quebra-Cabeças Deslizantes',
+    instructionsTitle: 'Como Jogar Quebra-Cabeça Deslizante Diário',
     instructionsSubtitle: 'Regras, controles e dicas de velocidade',
     objective: 'Objetivo',
     objectiveDesc: 'O quebra-cabeça de 16 peças (jogo do 15) possui uma grade 4×4 com 15 peças e um espaço vazio. Deslize as peças até restaurar o retrato do cavalo e organizar os números de 1 a 15!',
@@ -364,9 +368,11 @@ export const translations = {
     totalEarned: 'Pontos Ganhos',
     stackedTotal: 'Total Acumulado',
     points: 'pts',
+    showStats: 'Mostrar estatísticas (Tempo, Movs, Ritmo)',
+    hideStats: 'Ocultar estatísticas',
   },
   fr: {
-    appTitle: 'Puzzles Coulissants',
+    appTitle: 'Puzzle Coulissant Quotidien',
     gridSize: '4×4',
     theme: 'Thème :',
     themeName: 'Portrait Équestre',
@@ -384,7 +390,7 @@ export const translations = {
     shuffleBoard: 'Mélanger le Plateau',
     referencePhoto: 'Image de Référence',
     highScores: 'Meilleurs Scores',
-    footerTitle: 'Puzzles Coulissants • Plateau Résoluble 4×4',
+    footerTitle: 'Puzzle Coulissant Quotidien • Plateau Résoluble 4×4',
     footerSub: 'Chronomètre en direct et tableau des scores mondial sur le cloud',
 
     diffEasy: 'Facile (3 Coups)',
@@ -404,7 +410,7 @@ export const translations = {
     tileGuideDesc: 'Pour résoudre le puzzle, réorganisez les tuiles de 1 à 15 en laissant la case en bas à droite vide.',
     close: 'Fermer',
 
-    instructionsTitle: 'Comment Jouer aux Puzzles Coulissants',
+    instructionsTitle: 'Comment Jouer au Puzzle Coulissant Quotidien',
     instructionsSubtitle: 'Règles, commandes et astuces de vitesse',
     objective: 'Objectif',
     objectiveDesc: 'Le taquin de 16 cases (jeu de 15 classique) se compose d\'une grille 4×4 avec 15 tuiles illustrées et un espace vide. Faites glisser les tuiles jusqu\'à reformer le portrait du cheval et ordonner les chiffres de 1 à 15 !',
@@ -478,9 +484,11 @@ export const translations = {
     totalEarned: 'Points Gagnés',
     stackedTotal: 'Total Cumulé',
     points: 'pts',
+    showStats: 'Afficher les statistiques (Temps, Coups, Cadence)',
+    hideStats: 'Masquer les statistiques',
   },
   de: {
-    appTitle: 'Schiebepuzzles',
+    appTitle: 'Tägliches Schiebepuzzle',
     gridSize: '4×4',
     theme: 'Thema:',
     themeName: 'Pferdeporträt',
@@ -498,7 +506,7 @@ export const translations = {
     shuffleBoard: 'Spielfeld Mischen',
     referencePhoto: 'Referenzbild',
     highScores: 'Bestenliste',
-    footerTitle: 'Schiebepuzzles • 4×4 Lösbares Spielfeld',
+    footerTitle: 'Tägliches Schiebepuzzle • 4×4 Lösbares Spielfeld',
     footerSub: 'Live-Stoppuhr & Cloud-Bestenliste',
 
     diffEasy: 'Einfach (3 Züge)',
@@ -518,7 +526,7 @@ export const translations = {
     tileGuideDesc: 'Ordne die Kacheln von 1 bis 15 an und lasse das untere rechte Feld frei, um das Puzzle zu lösen.',
     close: 'Schließen',
 
-    instructionsTitle: 'Anleitung für Schiebepuzzles',
+    instructionsTitle: 'Anleitung für Tägliches Schiebepuzzle',
     instructionsSubtitle: 'Regeln, Steuerung & Tempo-Tipps',
     objective: 'Spielziel',
     objectiveDesc: 'Das 16-Puzzle (klassisches 15-Puzzle) besteht aus einem 4×4 Raster mit 15 Bildkacheln und einem freien Feld. Schiebe die Kacheln, bis das gesamte Pferdeporträt wiederhergestellt ist und die Zahlen 1 bis 15 in Reihenfolge sind!',
@@ -592,9 +600,11 @@ export const translations = {
     totalEarned: 'Verdiente Punkte',
     stackedTotal: 'Gesamter Stapel',
     points: 'Pkt',
+    showStats: 'Statistiken anzeigen (Zeit, Züge, Tempo)',
+    hideStats: 'Statistiken ausblenden',
   },
   zh: {
-    appTitle: '数字华容道滑动拼图',
+    appTitle: '每日数字华容道滑动拼图',
     gridSize: '4×4',
     theme: '主题：',
     themeName: '骏马肖像',
@@ -612,7 +622,7 @@ export const translations = {
     shuffleBoard: '打乱棋盘',
     referencePhoto: '参考原图',
     highScores: '高分榜',
-    footerTitle: '数字华容道滑动拼图 • 4×4 经典可解盘面',
+    footerTitle: '每日数字华容道滑动拼图 • 4×4 经典可解盘面',
     footerSub: '实时秒表计时器与云端全球排行榜',
 
     diffEasy: '简单 (3步打乱)',
@@ -632,7 +642,7 @@ export const translations = {
     tileGuideDesc: '按从 1 到 15 的顺序排列拼图片，将右下角留空即可成功还原拼图！',
     close: '关闭',
 
-    instructionsTitle: '滑动拼图游戏规则',
+    instructionsTitle: '每日滑动拼图游戏规则',
     instructionsSubtitle: '玩法规则、操作方式与速解技巧',
     objective: '游戏目标',
     objectiveDesc: '经典 16 格滑动拼图（15-Puzzle）包含 4×4 网格中的 15 块拼图和 1 个空格。滑动方块还原骏马肖像，并使数字 1 至 15 按顺序排列！',
@@ -706,6 +716,8 @@ export const translations = {
     totalEarned: '本次获得积分',
     stackedTotal: '累计总积分',
     points: '分',
+    showStats: '显示统计 (用时、步数、手速)',
+    hideStats: '隐藏统计',
   },
 };
 

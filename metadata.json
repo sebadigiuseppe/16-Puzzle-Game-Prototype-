@@ -1,6 +1,6 @@
 {
-  "name": "Sliding Puzzles",
-  "description": "A classic 4x4 sliding puzzle game featuring horse artwork, live stopwatch timer, move counter, and cloud high-score leaderboard.",
+  "name": "Daily Sliding Puzzle",
+  "description": "A daily 4x4 sliding puzzle game featuring community pet artwork, live stopwatch timer, move counter, and cloud high-score leaderboard.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

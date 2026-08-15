@@ -13,5 +13,13 @@ service cloud.firestore {
       allow create: if true;
       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
+
+    // Community Pet Pictures: read approved/all pictures, create approved pictures, update usage count
+    match /community_pictures/{pictureId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if request.auth != null && (resource.data.authorUid == request.auth.uid || request.auth.token.email_verified == true);
+    }
   }
 }

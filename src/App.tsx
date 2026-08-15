@@ -7,8 +7,16 @@ import { VictoryModal } from './components/VictoryModal';
 import { InstructionsModal } from './components/InstructionsModal';
 import { PeekModal } from './components/PeekModal';
 import { ShuffleConfirmModal } from './components/ShuffleConfirmModal';
-import { DEFAULT_IMAGE } from './data/images';
-import { Difficulty, GameStatus, PlayerStats, PuzzleImage, ScoreRecord, TileState } from './types';
+import { PetUploadModal } from './components/PetUploadModal';
+import { 
+  Difficulty, 
+  GameStatus, 
+  PlayerStats, 
+  PuzzleImage, 
+  ScoreRecord, 
+  TileState,
+  CommunityPetPicture 
+} from './types';
 import { 
   BLANK_ID, 
   getRowCol, 
@@ -36,10 +44,18 @@ import {
   signOutPlayer, 
   saveScoreToCloud, 
   fetchCloudLeaderboard, 
+  saveCommunityPictureToCloud,
+  fetchCloudCommunityPictures,
   User 
 } from './firebase';
+import { 
+  getLocalCommunityPets, 
+  saveLocalCommunityPet, 
+  getDailyFeaturedPet, 
+  petToPuzzleImage 
+} from './utils/communityPets';
 import { Language, getSavedLanguage, saveLanguage, translations } from './utils/i18n';
-import { Trophy, Shuffle, Eye } from 'lucide-react';
+import { Shuffle, Eye } from 'lucide-react';
 
 export default function App() {
   // Language & i18n
@@ -51,8 +67,14 @@ export default function App() {
     saveLanguage(lang);
   };
 
-  // Puzzle & Game State (Fixed to Horse Portrait theme)
-  const currentImage = DEFAULT_IMAGE;
+  // Daily Challenge Animal Companion
+  const [communityPets, setCommunityPets] = useState<CommunityPetPicture[]>(() => getLocalCommunityPets());
+  const [currentImage, setCurrentImage] = useState<PuzzleImage>(() => {
+    const initDaily = getDailyFeaturedPet();
+    return petToPuzzleImage(initDaily.dailyPet, true);
+  });
+
+  // Game & Board State
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [tiles, setTiles] = useState<TileState[]>(() => shuffleBoard('medium'));
   const [status, setStatus] = useState<GameStatus>('idle');
@@ -79,6 +101,7 @@ export default function App() {
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
   const [isPeekOpen, setIsPeekOpen] = useState<boolean>(false);
   const [isShuffleConfirmOpen, setIsShuffleConfirmOpen] = useState<boolean>(false);
+  const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
   const [pendingDifficulty, setPendingDifficulty] = useState<Difficulty | null>(null);
 
   // Timer reference
@@ -86,7 +109,7 @@ export default function App() {
   const startTimeRef = useRef<number>(0);
   const accumulatedTimeRef = useRef<number>(0);
 
-  // Track Firebase Auth state & fetch Cloud Leaderboard
+  // Track Firebase Auth state & fetch Cloud Leaderboard + Cloud Community Pets
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -107,6 +130,22 @@ export default function App() {
         setScores((prev) => {
           const combined = deduplicateScores([...cloudScores, ...prev]);
           return combined.sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+        });
+      }
+    });
+
+    // Fetch Cloud Community Pictures and sync with daily rotation pool
+    fetchCloudCommunityPictures().then((cloudPets) => {
+      if (cloudPets && cloudPets.length > 0) {
+        setCommunityPets((prev) => {
+          const map = new Map<string, CommunityPetPicture>();
+          prev.forEach((p) => map.set(p.id, p));
+          cloudPets.forEach((p) => map.set(p.id, p));
+          const merged = Array.from(map.values());
+          
+          const freshDaily = getDailyFeaturedPet(merged);
+          setCurrentImage(petToPuzzleImage(freshDaily.dailyPet, true));
+          return merged;
         });
       }
     });
@@ -169,6 +208,16 @@ export default function App() {
     if (timerRef.current) clearInterval(timerRef.current);
   }, [difficulty]);
 
+  // Handle Pet Approved by AI
+  const handlePetApproved = (pet: CommunityPetPicture) => {
+    // Save to local storage pool
+    const updatedPool = saveLocalCommunityPet(pet);
+    setCommunityPets(updatedPool);
+
+    // Save to Firestore cloud database pool
+    saveCommunityPictureToCloud(pet, currentUser);
+  };
+
   // Request shuffle with confirmation dialog
   const handleRequestShuffle = () => {
     setPendingDifficulty(null);
@@ -208,7 +257,7 @@ export default function App() {
     setStatus('playing');
   };
 
-  // Core Tile Movement
+  // Core Tile Movement via click or tap
   const moveTileAtPosition = useCallback((clickedPos: number) => {
     setTiles((prevTiles) => {
       const blankTile = prevTiles.find((t) => t.isBlank || t.id === BLANK_ID);
@@ -259,8 +308,8 @@ export default function App() {
     });
   }, [status, timeSeconds, moves]);
 
-  // Keyboard navigation
-  const handleKeyDownMove = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
+  // Touch gesture swipe handling
+  const handleSwipeMove = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
     setTiles((prevTiles) => {
       const blankTile = prevTiles.find((t) => t.isBlank || t.id === BLANK_ID);
       if (!blankTile) return prevTiles;
@@ -270,13 +319,13 @@ export default function App() {
 
       let targetPos: number | null = null;
       if (direction === 'up' && row < 3) {
-        targetPos = (row + 1) * 4 + col; // tile below moves UP into blank
+        targetPos = (row + 1) * 4 + col;
       } else if (direction === 'down' && row > 0) {
-        targetPos = (row - 1) * 4 + col; // tile above moves DOWN into blank
+        targetPos = (row - 1) * 4 + col;
       } else if (direction === 'left' && col < 3) {
-        targetPos = row * 4 + (col + 1); // tile right moves LEFT into blank
+        targetPos = row * 4 + (col + 1);
       } else if (direction === 'right' && col > 0) {
-        targetPos = row * 4 + (col - 1); // tile left moves RIGHT into blank
+        targetPos = row * 4 + (col - 1);
       }
 
       if (targetPos !== null) {
@@ -340,7 +389,7 @@ export default function App() {
     const updatedStats = updatePlayerStats(difficulty, finalTime, finalMoves);
     setStats(updatedStats);
 
-    // If user is already logged in, automatically save score to cloud leaderboard!
+    // If user is already logged in, automatically save score to cloud leaderboard
     if (currentUser) {
       const playerName = currentUser.displayName || currentUser.email?.split('@')[0] || lastPlayerName || 'Champion Solver';
       handleSaveScore(playerName, finalTime, finalMoves, currentUser);
@@ -396,6 +445,7 @@ export default function App() {
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenUpload={() => setIsUploadOpen(true)}
         currentUser={currentUser}
         onSignInGoogle={handleGoogleSignIn}
         onSignOutGoogle={handleGoogleSignOut}
@@ -427,7 +477,7 @@ export default function App() {
           showNumbers={showNumbers}
           status={status}
           onTileClick={moveTileAtPosition}
-          onKeyDownMove={handleKeyDownMove}
+          onKeyDownMove={handleSwipeMove}
           onResume={handleResume}
           language={currentLanguage}
         />
@@ -437,7 +487,7 @@ export default function App() {
           <button
             id="btn-quick-shuffle"
             onClick={handleRequestShuffle}
-            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs"
+            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs cursor-pointer"
           >
             <Shuffle className="w-4 h-4 text-[#3A5A40]" />
             {t.shuffleBoard}
@@ -446,7 +496,7 @@ export default function App() {
           <button
             id="btn-quick-peek"
             onClick={() => setIsPeekOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs"
+            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs cursor-pointer"
           >
             <Eye className="w-4 h-4 text-[#7E8260]" />
             {t.referencePhoto}
@@ -458,7 +508,7 @@ export default function App() {
       {/* Footer Branding */}
       <footer className="py-3 px-4 border-t border-[#E5E0D5] bg-[#F5F2EA]/40 text-center text-xs text-[#7A746B]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <span className="font-serif italic text-[#4A453E]">{t.appTitle} • {t.footerNote}</span>
+          <span className="font-serif italic text-[#4A453E]">{t.appTitle} • {t.footerNote || 'Solvable 4×4 sliding challenge'}</span>
           <a
             id="link-creator-linkedin"
             href="https://www.linkedin.com/in/sebadigiuseppe/"
@@ -505,6 +555,10 @@ export default function App() {
           startNewGame();
         }}
         onNextDifficulty={difficulty !== 'master' ? handleNextDifficulty : undefined}
+        onOpenUpload={() => {
+          setIsVictoryOpen(false);
+          setIsUploadOpen(true);
+        }}
         language={currentLanguage}
       />
 
@@ -540,8 +594,16 @@ export default function App() {
         language={currentLanguage}
       />
 
+      {/* Pet Upload Modal */}
+      <PetUploadModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onPetApproved={handlePetApproved}
+        currentUser={currentUser}
+        defaultSubmitterName={lastPlayerName}
+        language={currentLanguage}
+      />
+
     </div>
   );
 }
-
-

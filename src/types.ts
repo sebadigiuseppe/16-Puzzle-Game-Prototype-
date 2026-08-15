@@ -47,11 +47,41 @@ export interface PlayerStats {
   dailyStreak: number;
 }
 
+export interface AIReviewResult {
+  approved: boolean;
+  animalDetected: string;
+  qualityScore: number;
+  reason: string;
+  title: string;
+}
+
+export interface CommunityPetPicture {
+  id: string;
+  petName: string;
+  description: string;
+  location: string;
+  submitterName: string;
+  authorUid?: string | null;
+  imageUrl: string;
+  animalType: string;
+  qualityScore?: number;
+  aiComment?: string;
+  status: 'approved' | 'rejected' | 'pending';
+  createdAt: string;
+  timesUsedAsDaily: number;
+  lastUsedDate?: string | null;
+  usedDates?: string[];
+  isPreset?: boolean;
+}
+
 export interface PuzzleImage {
   id: string;
   name: string;
   url: string;
   author?: string;
   isCustom?: boolean;
+  isDaily?: boolean;
+  isCommunityPet?: boolean;
+  petData?: CommunityPetPicture;
 }
 
