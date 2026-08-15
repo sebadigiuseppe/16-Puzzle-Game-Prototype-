@@ -46,7 +46,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'stats'>('leaderboard');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | 'all'>('all');
-  const [sortBy, setSortBy] = useState<'time' | 'moves' | 'apm'>('time');
+  const [sortBy, setSortBy] = useState<'score' | 'time' | 'moves' | 'apm'>('score');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmClear, setConfirmClear] = useState(false);
   const t = translations[language];
@@ -74,6 +74,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
     // 3. Sort
     return unique.sort((a, b) => {
+      if (sortBy === 'score') {
+        const scoreA = a.scorePoints || 0;
+        const scoreB = b.scorePoints || 0;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return a.timeInSeconds - b.timeInSeconds;
+      }
       if (sortBy === 'time') return a.timeInSeconds - b.timeInSeconds;
       if (sortBy === 'moves') return a.moves - b.moves;
       if (sortBy === 'apm') return (b.movesPerMinute || 0) - (a.movesPerMinute || 0);
@@ -110,6 +116,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   const overallAPM = stats.totalPlayTimeSeconds > 0
     ? Math.round((stats.totalMovesMade / stats.totalPlayTimeSeconds) * 60)
     : 0;
+
+  const totalScore = stats.totalCumulativeScore || 0;
+  const todayScore = stats.todayScore || 0;
+  const dailyStreak = stats.dailyStreak || 0;
 
   return (
     <div 
@@ -171,6 +181,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           >
             <BarChart2 className="w-4 h-4" />
             {t.tabStats}
+            {totalScore > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[#B08968]/20 text-[#B08968] text-[10px] font-bold">
+                {totalScore.toLocaleString()} pts
+              </span>
+            )}
           </button>
         </div>
 
@@ -182,7 +197,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             {userStanding ? (
               <div 
                 id="user-standing-card"
-                className="bg-gradient-to-r from-[#3A5A40]/15 via-[#A3B18A]/20 to-[#F5F2EA] border-2 border-[#3A5A40]/40 rounded-2xl p-3.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                className="bg-linear-to-r from-[#3A5A40]/15 via-[#A3B18A]/20 to-[#F5F2EA] border-2 border-[#3A5A40]/40 rounded-2xl p-3.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-3">
                   {/* Standing Rank Pill */}
@@ -214,25 +229,37 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         />
                       ) : null}
                       <span>{userStanding.score.playerName}</span>
+                      {dailyStreak > 1 && (
+                        <span className="text-[10px] text-[#B08968] font-bold">🔥 {dailyStreak}d streak</span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Standing Stats summary */}
-                <div className="flex items-center gap-3 bg-[#FDFCF8]/90 border border-[#DAD2C3] px-3 py-1.5 rounded-xl text-xs shrink-0">
-                  <div>
+                <div className="flex items-center gap-2.5 bg-[#FDFCF8]/90 border border-[#DAD2C3] px-3 py-1.5 rounded-xl text-xs shrink-0">
+                  {userStanding.score.scorePoints ? (
+                    <div>
+                      <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.colScore}</div>
+                      <div className="font-bold text-[#3A5A40] tabular-nums flex items-center gap-0.5">
+                        <Sparkles className="w-3 h-3 text-[#B08968]" />
+                        {userStanding.score.scorePoints.toLocaleString()}
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className={userStanding.score.scorePoints ? 'border-l border-[#E5E0D5] pl-2.5' : ''}>
                     <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.time}</div>
                     <div className="font-bold text-[#3A5A40] tabular-nums">
                       {formatTime(userStanding.score.timeInSeconds)}
                     </div>
                   </div>
-                  <div className="border-l border-[#E5E0D5] pl-3">
+                  <div className="border-l border-[#E5E0D5] pl-2.5">
                     <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.moves}</div>
                     <div className="font-bold text-[#4A453E] tabular-nums">
                       {userStanding.score.moves}
                     </div>
                   </div>
-                  <div className="border-l border-[#E5E0D5] pl-3">
+                  <div className="border-l border-[#E5E0D5] pl-2.5">
                     <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.colPace}</div>
                     <div className="font-bold text-[#7E8260] tabular-nums">
                       {Math.round(userStanding.score.movesPerMinute || 0)} m/m
@@ -286,8 +313,8 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               </div>
 
               {/* Sort & Search Controls */}
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 sm:w-44">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative flex-1 sm:w-36">
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#7A746B]" />
                   <input
                     type="text"
@@ -302,6 +329,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   <span className="text-[10px] text-[#7A746B] px-1 font-semibold flex items-center gap-0.5">
                     <Filter className="w-3 h-3" />
                   </span>
+                  <button
+                    onClick={() => setSortBy('score')}
+                    className={`px-2 py-1 rounded-lg cursor-pointer ${
+                      sortBy === 'score' ? 'bg-[#3A5A40] text-[#FDFCF8] font-semibold shadow-xs' : 'text-[#7A746B] hover:text-[#4A453E]'
+                    }`}
+                    title="Sort by highest points"
+                  >
+                    {t.colScore}
+                  </button>
                   <button
                     onClick={() => setSortBy('time')}
                     className={`px-2 py-1 rounded-lg cursor-pointer ${
@@ -348,6 +384,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         <th className="py-2.5 px-3"># {t.colRank}</th>
                         <th className="py-2.5 px-3">{t.colPlayer}</th>
                         <th className="py-2.5 px-3">{t.difficulty}</th>
+                        <th className="py-2.5 px-3">{t.colScore}</th>
                         <th className="py-2.5 px-3">{t.colTime}</th>
                         <th className="py-2.5 px-3">{t.colMoves}</th>
                         <th className="py-2.5 px-3">{t.colPace}</th>
@@ -430,6 +467,16 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                               </span>
                             </td>
                             <td className="py-2.5 px-3 font-sans font-bold text-[#3A5A40] tabular-nums">
+                              {score.scorePoints ? (
+                                <span className="inline-flex items-center gap-1 font-extrabold text-[#3A5A40]">
+                                  <Sparkles className="w-3 h-3 text-[#B08968]" />
+                                  {score.scorePoints.toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="text-[#9A9E7C] font-normal">-</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 font-sans font-bold text-[#4A453E] tabular-nums">
                               {formatTime(score.timeInSeconds)}
                             </td>
                             <td className="py-2.5 px-3 font-sans text-[#4A453E] tabular-nums">
@@ -488,10 +535,43 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           </div>
         )}
 
-        {/* Tab 2: Player Performance Analytics */}
+        {/* Tab 2: Player Performance Analytics & Daily Stack */}
         {activeTab === 'stats' && (
-          <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-5">
+          <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-4">
             
+            {/* Daily Streak & Total Cumulative Points Banner */}
+            <div className="bg-linear-to-r from-[#3A5A40]/10 via-[#B08968]/15 to-[#3A5A40]/10 border border-[#3A5A40]/25 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#3A5A40] text-[#FDFCF8] flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-6 h-6 text-[#E0A96D]" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold tracking-wider text-[#7E8260]">
+                    {t.statTotalScore}
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-[#3A5A40] font-sans">
+                    {totalScore.toLocaleString()} <span className="text-sm font-semibold text-[#7E8260]">pts</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-[#FDFCF8]/90 border border-[#DAD2C3] px-3.5 py-2 rounded-xl text-xs">
+                <div>
+                  <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.statTodayScore}</div>
+                  <div className="font-bold text-[#3A5A40] tabular-nums">
+                    +{todayScore.toLocaleString()} pts
+                  </div>
+                </div>
+                <div className="border-l border-[#E5E0D5] pl-3">
+                  <div className="text-[9px] text-[#9A9E7C] font-bold uppercase">{t.statDailyStreak}</div>
+                  <div className="font-bold text-[#B08968] flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 fill-[#B08968]/30" />
+                    <span>{dailyStreak} {dailyStreak === 1 ? 'Day' : 'Days'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Overview Metric Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-3.5 rounded-2xl bg-[#F5F2EA] border border-[#E5E0D5] shadow-xs">
@@ -627,3 +707,4 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     </div>
   );
 };
+

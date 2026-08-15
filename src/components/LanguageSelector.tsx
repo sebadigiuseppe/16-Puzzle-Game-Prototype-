@@ -4,11 +4,13 @@ import { Language, LANGUAGES } from '../utils/i18n';
 interface LanguageSelectorProps {
   currentLanguage: Language;
   onSelectLanguage: (lang: Language) => void;
+  variant?: 'dropdown' | 'inline';
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   currentLanguage,
   onSelectLanguage,
+  variant = 'dropdown',
 }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -26,6 +28,32 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
   const activeLang = LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0];
 
+  if (variant === 'inline') {
+    return (
+      <div id="language-selector-inline" className="flex items-center justify-between gap-1 w-full">
+        {LANGUAGES.map((lang) => {
+          const isSelected = lang.code === currentLanguage;
+          return (
+            <button
+              key={lang.code}
+              id={`btn-lang-inline-${lang.code}`}
+              type="button"
+              title={lang.nativeLabel}
+              onClick={() => onSelectLanguage(lang.code)}
+              className={`flex-1 py-1.5 rounded-xl flex items-center justify-center text-lg transition select-none ${
+                isSelected
+                  ? 'bg-[#3A5A40]/15 ring-2 ring-[#3A5A40] scale-105 shadow-2xs'
+                  : 'hover:bg-[#EBE7DF] hover:scale-105 bg-[#FDFCF8] border border-[#E5E0D5]'
+              }`}
+            >
+              <span className="leading-none">{lang.flag}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div id="language-selector-wrapper" className="relative" ref={dropdownRef}>
       {/* Trigger Button - Displays ONLY the active language flag */}
@@ -40,11 +68,11 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         <span className="leading-none">{activeLang.flag}</span>
       </button>
 
-      {/* Popover Dropdown - Displays ONLY the flag choices */}
+      {/* Popover Dropdown - Displays flag choices */}
       {isOpen && (
         <div
           id="language-dropdown-menu"
-          className="absolute right-0 mt-2 bg-[#FDFCF8] border border-[#DAD2C3] rounded-2xl shadow-xl z-50 p-1.5 flex flex-col gap-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100 min-w-[50px]"
+          className="absolute right-0 mt-2 bg-[#FDFCF8] border border-[#DAD2C3] rounded-2xl shadow-2xl z-[100] p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100 min-w-[50px]"
         >
           {LANGUAGES.map((lang) => {
             const isSelected = lang.code === currentLanguage;
@@ -73,4 +101,5 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     </div>
   );
 };
+
 

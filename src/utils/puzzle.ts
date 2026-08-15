@@ -1,4 +1,4 @@
-import { Difficulty, TileState } from '../types';
+import { Difficulty, ScoreBreakdown, TileState } from '../types';
 
 export const GRID_SIZE = 4; // 4x4 for a 16-puzzle
 export const TOTAL_TILES = GRID_SIZE * GRID_SIZE; // 16
@@ -159,3 +159,65 @@ export function formatTimeCompact(seconds: number): string {
   if (mins === 0) return `${secs}s`;
   return `${mins}m ${secs}s`;
 }
+
+// Calculate comprehensive game score points based on difficulty, time, moves, and pace
+export function calculateGameScore(
+  difficulty: Difficulty,
+  timeSeconds: number,
+  moves: number
+): ScoreBreakdown {
+  const baseScores: Record<Difficulty, number> = {
+    easy: 500,
+    medium: 1200,
+    hard: 2500,
+    master: 4000,
+  };
+
+  const multipliers: Record<Difficulty, number> = {
+    easy: 1.0,
+    medium: 1.4,
+    hard: 2.0,
+    master: 2.8,
+  };
+
+  const targetTime: Record<Difficulty, number> = {
+    easy: 25,
+    medium: 70,
+    hard: 140,
+    master: 200,
+  };
+
+  const targetMoves: Record<Difficulty, number> = {
+    easy: 25,
+    medium: 65,
+    hard: 130,
+    master: 190,
+  };
+
+  const base = baseScores[difficulty];
+  const mult = multipliers[difficulty];
+
+  // Time speed bonus (faster than par gives max bonus)
+  const timeRatio = Math.max(0, 1 - (timeSeconds / (targetTime[difficulty] * 2.2)));
+  const rawTimeBonus = Math.round(timeRatio * 1200);
+
+  // Move efficiency bonus (fewer moves than par gives max bonus)
+  const moveRatio = Math.max(0, 1 - (moves / (targetMoves[difficulty] * 2.2)));
+  const rawMoveBonus = Math.round(moveRatio * 1200);
+
+  // Pace bonus
+  const apm = timeSeconds > 0 ? (moves / timeSeconds) * 60 : 0;
+  const rawPaceBonus = Math.min(500, Math.round(apm * 5));
+
+  const totalScore = Math.max(250, Math.round((base + rawTimeBonus + rawMoveBonus + rawPaceBonus) * mult));
+
+  return {
+    totalScore,
+    baseScore: Math.round(base * mult),
+    timeBonus: Math.round(rawTimeBonus * mult),
+    moveBonus: Math.round(rawMoveBonus * mult),
+    paceBonus: Math.round(rawPaceBonus * mult),
+    difficultyMultiplier: mult,
+  };
+}
+

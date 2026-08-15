@@ -1,4 +1,5 @@
 import { Difficulty, PlayerStats, ScoreRecord } from '../types';
+import { calculateGameScore } from './puzzle';
 
 const LEADERBOARD_KEY = '16puzzle_leaderboard_v1';
 const STATS_KEY = '16puzzle_player_stats_v1';
@@ -15,6 +16,8 @@ const INITIAL_BENCHMARK_SCORES: ScoreRecord[] = [
     imageTheme: 'Rustic Horse',
     movesPerMinute: 82.1,
     rankBadge: 'Grandmaster',
+    scorePoints: calculateGameScore('medium', 42.4, 58).totalScore,
+    cumulativeScore: 8450,
   },
   {
     id: 'seed-2',
@@ -26,6 +29,8 @@ const INITIAL_BENCHMARK_SCORES: ScoreRecord[] = [
     imageTheme: 'Rustic Horse',
     movesPerMinute: 85.7,
     rankBadge: 'Master',
+    scorePoints: calculateGameScore('easy', 18.2, 26).totalScore,
+    cumulativeScore: 3200,
   },
   {
     id: 'seed-3',
@@ -37,6 +42,8 @@ const INITIAL_BENCHMARK_SCORES: ScoreRecord[] = [
     imageTheme: 'Rustic Horse',
     movesPerMinute: 79.4,
     rankBadge: 'Champion',
+    scorePoints: calculateGameScore('hard', 84.6, 112).totalScore,
+    cumulativeScore: 12800,
   },
   {
     id: 'seed-4',
@@ -48,6 +55,8 @@ const INITIAL_BENCHMARK_SCORES: ScoreRecord[] = [
     imageTheme: 'Rustic Horse',
     movesPerMinute: 74.0,
     rankBadge: 'Grandmaster',
+    scorePoints: calculateGameScore('master', 118.4, 146).totalScore,
+    cumulativeScore: 19500,
   },
   {
     id: 'seed-5',
@@ -59,6 +68,8 @@ const INITIAL_BENCHMARK_SCORES: ScoreRecord[] = [
     imageTheme: 'Rustic Horse',
     movesPerMinute: 74.2,
     rankBadge: 'Expert',
+    scorePoints: calculateGameScore('medium', 59.8, 74).totalScore,
+    cumulativeScore: 5600,
   }
 ];
 
@@ -79,7 +90,12 @@ const INITIAL_STATS: PlayerStats = {
   },
   totalPlayTimeSeconds: 0,
   totalMovesMade: 0,
+  totalCumulativeScore: 0,
+  todayScore: 0,
+  lastPlayedDate: '',
+  dailyStreak: 0,
 };
+
 
 export function deduplicateScores(records: ScoreRecord[]): ScoreRecord[] {
   const seenKeys = new Set<string>();
@@ -159,6 +175,11 @@ export function getPlayerStats(): PlayerStats {
     const raw = localStorage.getItem(STATS_KEY);
     if (!raw) return INITIAL_STATS;
     const parsed = JSON.parse(raw);
+    
+    // Check if today is a new day to reset todayScore
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isSameDay = parsed.lastPlayedDate === todayStr;
+
     return {
       ...INITIAL_STATS,
       ...parsed,
@@ -170,6 +191,10 @@ export function getPlayerStats(): PlayerStats {
         ...INITIAL_STATS.fewestMoves,
         ...(parsed.fewestMoves || {}),
       },
+      totalCumulativeScore: parsed.totalCumulativeScore || 0,
+      todayScore: isSameDay ? (parsed.todayScore || 0) : 0,
+      lastPlayedDate: parsed.lastPlayedDate || '',
+      dailyStreak: parsed.dailyStreak || 0,
     };
   } catch {
     return INITIAL_STATS;
@@ -179,14 +204,37 @@ export function getPlayerStats(): PlayerStats {
 export function updatePlayerStats(
   difficulty: Difficulty,
   timeSeconds: number,
-  moves: number
+  moves: number,
+  earnedScore?: number
 ): PlayerStats {
   try {
     const stats = getPlayerStats();
+    const scoreToAdd = earnedScore !== undefined 
+      ? earnedScore 
+      : calculateGameScore(difficulty, timeSeconds, moves).totalScore;
+
     stats.gamesPlayed += 1;
     stats.gamesWon += 1;
     stats.totalPlayTimeSeconds += timeSeconds;
     stats.totalMovesMade += moves;
+    stats.totalCumulativeScore = (stats.totalCumulativeScore || 0) + scoreToAdd;
+
+    // Daily streak & today score calculation
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (stats.lastPlayedDate === todayStr) {
+      stats.todayScore = (stats.todayScore || 0) + scoreToAdd;
+    } else if (stats.lastPlayedDate === yesterdayStr) {
+      stats.todayScore = scoreToAdd;
+      stats.dailyStreak = (stats.dailyStreak || 0) + 1;
+    } else {
+      stats.todayScore = scoreToAdd;
+      stats.dailyStreak = 1;
+    }
+    stats.lastPlayedDate = todayStr;
 
     const currentBestTime = stats.bestTimeSeconds[difficulty];
     if (currentBestTime === null || timeSeconds < currentBestTime) {
@@ -204,6 +252,7 @@ export function updatePlayerStats(
     return INITIAL_STATS;
   }
 }
+
 
 export function recordGameStarted(): void {
   try {

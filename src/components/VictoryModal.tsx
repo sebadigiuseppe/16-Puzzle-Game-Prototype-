@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   Trophy, 
-  Award, 
   Footprints, 
   Timer, 
   Zap, 
@@ -11,10 +10,10 @@ import {
   RotateCcw,
   CheckCircle2,
   LogIn,
-  User as UserIcon
+  Flame
 } from 'lucide-react';
-import { Difficulty } from '../types';
-import { formatTime } from '../utils/puzzle';
+import { Difficulty, ScoreBreakdown } from '../types';
+import { formatTime, calculateGameScore } from '../utils/puzzle';
 import { sounds } from '../utils/audio';
 import { Language, translations } from '../utils/i18n';
 import { User } from '../firebase';
@@ -34,6 +33,9 @@ interface VictoryModalProps {
   onPlayAgain: () => void;
   onNextDifficulty?: () => void;
   language: Language;
+  earnedScore?: number;
+  totalCumulativeScore?: number;
+  dailyStreak?: number;
 }
 
 export const VictoryModal: React.FC<VictoryModalProps> = ({
@@ -51,17 +53,26 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   onPlayAgain,
   onNextDifficulty,
   language,
+  earnedScore,
+  totalCumulativeScore,
+  dailyStreak = 1,
 }) => {
   const [playerName, setPlayerName] = useState(initialPlayerName);
   const [manualSaved, setManualSaved] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [showGuestInput, setShowGuestInput] = useState(false);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const t = translations[language];
+
+  // Calculate score breakdown
+  const scoreData: ScoreBreakdown = calculateGameScore(timeSeconds, moves, difficulty);
+  const totalScoreEarned = earnedScore ?? scoreData.totalScore;
 
   useEffect(() => {
     if (isOpen) {
       setManualSaved(false);
       setShowGuestInput(false);
+      setShowScoreBreakdown(false);
       setPlayerName(currentUser?.displayName || initialPlayerName);
       sounds.playVictory();
 
@@ -124,17 +135,17 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
     >
       <div 
         id="modal-victory-content"
-        className="bg-[#FDFCF8] border border-[#DAD2C3] w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden text-[#4A453E] text-center p-6 sm:p-8 relative animate-in fade-in zoom-in duration-200"
+        className="bg-[#FDFCF8] border border-[#DAD2C3] w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden text-[#4A453E] text-center p-6 sm:p-8 relative animate-in fade-in zoom-in duration-200 my-auto"
       >
         {/* Victory Trophy Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-[#A3B18A]/30 border border-[#9A9E7C]/40 flex items-center justify-center mb-3.5 text-[#3A5A40] shadow-sm">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-[#A3B18A]/30 border border-[#9A9E7C]/40 flex items-center justify-center mb-3 text-[#3A5A40] shadow-sm">
           <Trophy className="w-8 h-8 text-[#3A5A40] animate-bounce" />
         </div>
 
         {/* Header Title */}
         <div className="mb-2">
           {isNewRecord && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#3A5A40]/10 text-[#3A5A40] font-bold text-xs border border-[#3A5A40]/25 mb-2 uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-[#3A5A40]/10 text-[#3A5A40] font-bold text-xs border border-[#3A5A40]/25 mb-1.5 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               {t.newRecord}
             </span>
@@ -142,59 +153,111 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
           <h2 className="text-3xl font-bold font-serif text-[#3A5A40] tracking-tight">
             {t.victoryTitle}
           </h2>
-          <p className="text-xs text-[#7A746B] mt-1">
+          <p className="text-xs text-[#7A746B] mt-0.5">
             {t.victorySubtitle}
           </p>
         </div>
 
+        {/* Score & Points Banner with Stack Info */}
+        <div className="my-3 bg-linear-to-r from-[#3A5A40]/10 via-[#B08968]/15 to-[#3A5A40]/10 border border-[#3A5A40]/20 rounded-2xl p-3.5 text-center">
+          <div className="text-[10px] uppercase font-bold tracking-widest text-[#7E8260] mb-0.5">
+            {t.totalEarned}
+          </div>
+          <div className="text-3xl font-extrabold text-[#3A5A40] flex items-center justify-center gap-1.5 font-sans">
+            <Sparkles className="w-5 h-5 text-[#B08968] fill-[#B08968]/30" />
+            <span>+{totalScoreEarned.toLocaleString()}</span>
+            <span className="text-sm font-semibold text-[#7E8260]">pts</span>
+          </div>
+
+          {/* Daily Stack & Streak Footer inside banner */}
+          <div className="mt-2 pt-2 border-t border-[#3A5A40]/15 flex items-center justify-around text-xs">
+            {totalCumulativeScore !== undefined && totalCumulativeScore > 0 && (
+              <div className="flex items-center gap-1 text-[#4A453E]">
+                <span className="text-[11px] text-[#7A746B]">{t.stackedTotal}:</span>
+                <strong className="text-[#3A5A40] font-bold">{(totalCumulativeScore).toLocaleString()}</strong>
+              </div>
+            )}
+            {dailyStreak > 0 && (
+              <div className="flex items-center gap-1 text-[#B08968] font-bold text-[11px]">
+                <Flame className="w-3.5 h-3.5 fill-[#B08968]/30" />
+                <span>{dailyStreak} {dailyStreak === 1 ? 'Day Streak' : 'Days Streak'}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+              className="text-[10px] text-[#3A5A40] hover:underline font-semibold"
+            >
+              {showScoreBreakdown ? 'Hide Breakdown' : 'Breakdown ▾'}
+            </button>
+          </div>
+
+          {/* Expandable Breakdown Drawer */}
+          {showScoreBreakdown && (
+            <div className="mt-2.5 pt-2 border-t border-[#3A5A40]/15 grid grid-cols-2 gap-1.5 text-left text-[11px] bg-[#FDFCF8]/90 p-2.5 rounded-xl">
+              <div className="flex justify-between text-[#7A746B]">
+                <span>{t.basePoints}:</span>
+                <strong className="text-[#4A453E]">+{scoreData.baseScore}</strong>
+              </div>
+              <div className="flex justify-between text-[#7A746B]">
+                <span>{t.timeBonus}:</span>
+                <strong className="text-[#3A5A40]">+{scoreData.timeBonus}</strong>
+              </div>
+              <div className="flex justify-between text-[#7A746B]">
+                <span>{t.moveBonus}:</span>
+                <strong className="text-[#3A5A40]">+{scoreData.moveBonus}</strong>
+              </div>
+              <div className="flex justify-between text-[#7A746B]">
+                <span>{t.paceBonus}:</span>
+                <strong className="text-[#3A5A40]">+{scoreData.paceBonus}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Performance Results Grid */}
-        <div className="grid grid-cols-3 gap-2.5 my-4 bg-[#F5F2EA] p-3.5 rounded-2xl border border-[#E5E0D5]">
+        <div className="grid grid-cols-3 gap-2 my-3 bg-[#F5F2EA] p-3 rounded-2xl border border-[#E5E0D5]">
           
           {/* Time Stat */}
           <div className="flex flex-col items-center justify-center">
-            <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
+            <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-0.5">
               <Timer className="w-3 h-3 text-[#3A5A40]" />
               {t.time}
             </span>
-            <span className="text-lg sm:text-xl font-sans font-bold text-[#3A5A40] tabular-nums">
+            <span className="text-base sm:text-lg font-sans font-bold text-[#3A5A40] tabular-nums">
               {formatTime(timeSeconds)}
             </span>
           </div>
 
           {/* Moves Stat */}
-          <div className="flex flex-col items-center justify-center border-x border-[#E5E0D5] px-2">
-            <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
+          <div className="flex flex-col items-center justify-center border-x border-[#E5E0D5] px-1.5">
+            <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-0.5">
               <Footprints className="w-3 h-3 text-[#3A5A40]" />
               {t.moves}
             </span>
-            <span className="text-lg sm:text-xl font-sans font-bold text-[#4A453E] tabular-nums">
+            <span className="text-base sm:text-lg font-sans font-bold text-[#4A453E] tabular-nums">
               {moves}
             </span>
           </div>
 
           {/* Pace Stat */}
           <div className="flex flex-col items-center justify-center">
-            <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
+            <span className="text-[10px] text-[#9A9E7C] font-bold uppercase tracking-wider flex items-center gap-1 mb-0.5">
               <Zap className="w-3 h-3 text-[#7E8260]" />
               {t.movesPerMin.split(' ')[0]}
             </span>
-            <span className="text-lg sm:text-xl font-sans font-bold text-[#4A453E] tabular-nums">
+            <span className="text-base sm:text-lg font-sans font-bold text-[#4A453E] tabular-nums">
               {movesPerMin} <span className="text-[10px] font-normal text-[#7A746B]">m/m</span>
             </span>
           </div>
 
         </div>
 
-        {/* Mode Tag */}
-        <div className="flex items-center justify-center gap-2 text-xs text-[#7A746B] mb-4">
-          <span>{t.difficulty}: <strong className="text-[#3A5A40] capitalize">{difficulty === 'medium' ? 'Standard' : difficulty}</strong></span>
-        </div>
-
         {/* Score Persistence & Authentication Section */}
         {currentUser || isSaved ? (
-          /* Case 1: User is Logged In -> Auto-saved or Saved state */
-          <div className="mb-4 bg-[#A3B18A]/20 border border-[#9A9E7C]/40 p-3.5 rounded-2xl text-left flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#3A5A40]/15 flex items-center justify-center shrink-0 border border-[#3A5A40]/25 overflow-hidden">
+          /* Case 1: User is Logged In -> Auto-saved state */
+          <div className="mb-3.5 bg-[#A3B18A]/20 border border-[#9A9E7C]/40 p-3 rounded-2xl text-left flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#3A5A40]/15 flex items-center justify-center shrink-0 border border-[#3A5A40]/25 overflow-hidden">
               {currentUser?.photoURL ? (
                 <img 
                   src={currentUser.photoURL} 
@@ -217,17 +280,17 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
           </div>
         ) : (
           /* Case 2: User is NOT Logged In -> Prompt to Sign In with Google & Auto-Save */
-          <div className="mb-4 bg-[#F5F2EA] border border-[#DAD2C3] p-4 rounded-2xl text-left space-y-3">
-            <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#3A5A40]/10 flex items-center justify-center shrink-0 text-[#3A5A40] mt-0.5">
+          <div className="mb-3.5 bg-[#F5F2EA] border border-[#DAD2C3] p-3.5 rounded-2xl text-left space-y-2.5">
+            <div className="flex items-start gap-2">
+              <div className="w-7 h-7 rounded-xl bg-[#3A5A40]/10 flex items-center justify-center shrink-0 text-[#3A5A40] mt-0.5">
                 <LogIn className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-[#4A453E]">
                   {t.signInToSavePrompt}
                 </p>
-                <p className="text-[11px] text-[#7A746B] mt-0.5">
-                  Sign in once to record this win and track your rank against players worldwide.
+                <p className="text-[10px] text-[#7A746B] mt-0.5">
+                  Sign in once to record this score and track your rank against players worldwide.
                 </p>
               </div>
             </div>
@@ -263,7 +326,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
 
             {/* Optional Guest Name Form */}
             {!showGuestInput ? (
-              <div className="text-center pt-1">
+              <div className="text-center pt-0.5">
                 <button
                   type="button"
                   onClick={() => setShowGuestInput(true)}
@@ -327,7 +390,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
             id="btn-next-difficulty"
             type="button"
             onClick={onNextDifficulty}
-            className="w-full mt-3 py-2 text-xs text-[#3A5A40] hover:text-[#2E4833] font-semibold flex items-center justify-center gap-1 transition"
+            className="w-full mt-2.5 py-1.5 text-xs text-[#3A5A40] hover:text-[#2E4833] font-semibold flex items-center justify-center gap-1 transition"
           >
             {t.nextChallenge} ({difficulty === 'hard' ? 'Master' : 'Next'}) <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -337,3 +400,4 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
     </div>
   );
 };
+

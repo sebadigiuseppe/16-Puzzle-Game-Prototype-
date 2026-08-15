@@ -9,6 +9,15 @@ export interface TileState {
   isBlank: boolean;
 }
 
+export interface ScoreBreakdown {
+  totalScore: number;
+  baseScore: number;
+  timeBonus: number;
+  moveBonus: number;
+  paceBonus: number;
+  difficultyMultiplier: number;
+}
+
 export interface ScoreRecord {
   id: string;
   playerName: string;
@@ -21,6 +30,8 @@ export interface ScoreRecord {
   rankBadge?: string;
   photoURL?: string | null;
   userId?: string | null;
+  scorePoints?: number;
+  cumulativeScore?: number;
 }
 
 export interface PlayerStats {
@@ -30,6 +41,10 @@ export interface PlayerStats {
   fewestMoves: Record<Difficulty, number | null>;
   totalPlayTimeSeconds: number;
   totalMovesMade: number;
+  totalCumulativeScore: number;
+  todayScore: number;
+  lastPlayedDate: string;
+  dailyStreak: number;
 }
 
 export interface PuzzleImage {
@@ -39,3 +54,4 @@ export interface PuzzleImage {
   author?: string;
   isCustom?: boolean;
 }
+

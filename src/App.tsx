@@ -14,7 +14,8 @@ import {
   getRowCol, 
   getSlidePath, 
   isPuzzleSolved, 
-  shuffleBoard 
+  shuffleBoard,
+  calculateGameScore
 } from './utils/puzzle';
 import { sounds } from './utils/audio';
 import { 
@@ -303,6 +304,7 @@ export default function App() {
     setLastPlayerName(name);
 
     const movesPerMin = finalTime > 0 ? (finalMoves / finalTime) * 60 : 0;
+    const scoreCalc = calculateGameScore(difficulty, finalTime, finalMoves);
     const newRecord: ScoreRecord = {
       id: `score-${Date.now()}`,
       playerName: name,
@@ -315,6 +317,8 @@ export default function App() {
       imageTheme: currentImage.name,
       movesPerMinute: movesPerMin,
       rankBadge: movesPerMin > 90 ? 'Grandmaster' : movesPerMin > 65 ? 'Master' : 'Challenger',
+      scorePoints: scoreCalc.totalScore,
+      cumulativeScore: (stats.totalCumulativeScore || 0) + scoreCalc.totalScore,
     };
 
     const updatedLeaderboard = saveScoreToLeaderboard(newRecord);
@@ -399,6 +403,8 @@ export default function App() {
         onSelectLanguage={handleSelectLanguage}
         difficulty={difficulty}
         onChangeDifficulty={handleRequestDifficultyChange}
+        totalScore={stats.totalCumulativeScore || 0}
+        dailyStreak={stats.dailyStreak || 0}
       />
 
       {/* Main Interactive Stage */}
@@ -453,9 +459,15 @@ export default function App() {
       <footer className="py-3 px-4 border-t border-[#E5E0D5] bg-[#F5F2EA]/40 text-center text-xs text-[#7A746B]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <span className="font-serif italic text-[#4A453E]">{t.appTitle} • {t.footerNote}</span>
-          <span className="text-[11px] text-[#9A9E7C]">
-            Live Timer Stopwatch & Cloud High Score Leaderboard Tracker
-          </span>
+          <a
+            id="link-creator-linkedin"
+            href="https://www.linkedin.com/in/sebadigiuseppe/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-[#7A746B] hover:text-[#3A5A40] transition underline underline-offset-2 flex items-center gap-1 font-medium"
+          >
+            Made by Seba Di Giuseppe
+          </a>
         </div>
       </footer>
 
