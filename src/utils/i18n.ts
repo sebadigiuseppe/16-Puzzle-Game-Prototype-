@@ -138,6 +138,9 @@ export const translations = {
     points: 'pts',
     showStats: 'Show Stats (Time, Moves, Pace)',
     hideStats: 'Hide Stats',
+    darkMode: 'Dark Mode',
+    lightMode: 'Light Mode',
+    themeMode: 'Appearance',
   },
   es: {
     appTitle: 'Puzle Deslizante Diario',
@@ -254,6 +257,9 @@ export const translations = {
     points: 'pts',
     showStats: 'Mostrar estadísticas (Tiempo, Movs, Ritmo)',
     hideStats: 'Ocultar estadísticas',
+    darkMode: 'Modo Oscuro',
+    lightMode: 'Modo Claro',
+    themeMode: 'Apariencia',
   },
   pt: {
     appTitle: 'Quebra-Cabeça Deslizante Diário',
@@ -370,6 +376,9 @@ export const translations = {
     points: 'pts',
     showStats: 'Mostrar estatísticas (Tempo, Movs, Ritmo)',
     hideStats: 'Ocultar estatísticas',
+    darkMode: 'Modo Escuro',
+    lightMode: 'Modo Claro',
+    themeMode: 'Aparência',
   },
   fr: {
     appTitle: 'Puzzle Coulissant Quotidien',
@@ -486,6 +495,9 @@ export const translations = {
     points: 'pts',
     showStats: 'Afficher les statistiques (Temps, Coups, Cadence)',
     hideStats: 'Masquer les statistiques',
+    darkMode: 'Mode Sombre',
+    lightMode: 'Mode Clair',
+    themeMode: 'Apparence',
   },
   de: {
     appTitle: 'Tägliches Schiebepuzzle',
@@ -602,6 +614,9 @@ export const translations = {
     points: 'Pkt',
     showStats: 'Statistiken anzeigen (Zeit, Züge, Tempo)',
     hideStats: 'Statistiken ausblenden',
+    darkMode: 'Dunkelmodus',
+    lightMode: 'Hellmodus',
+    themeMode: 'Erscheinungsbild',
   },
   zh: {
     appTitle: '每日数字华容道滑动拼图',
@@ -718,6 +733,9 @@ export const translations = {
     points: '分',
     showStats: '显示统计 (用时、步数、手速)',
     hideStats: '隐藏统计',
+    darkMode: '深色模式',
+    lightMode: '浅色模式',
+    themeMode: '外观',
   },
 };
 

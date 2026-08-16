@@ -54,9 +54,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             id="btn-show-metrics"
             type="button"
             onClick={toggleVisibility}
-            className="px-4 py-1.5 rounded-full bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#7A746B] hover:text-[#3A5A40] border border-[#DAD2C3] transition text-xs font-semibold flex items-center gap-2 shadow-2xs hover:shadow-xs group cursor-pointer"
+            className="px-4 py-1.5 rounded-full bg-[#F5F2EA] dark:bg-[#1E1D19] hover:bg-[#EBE7DF] dark:hover:bg-[#282622] text-[#7A746B] dark:text-[#A8A196] hover:text-[#3A5A40] dark:hover:text-[#84B082] border border-[#DAD2C3] dark:border-[#3A3730] transition text-xs font-semibold flex items-center gap-2 shadow-2xs hover:shadow-xs group cursor-pointer"
           >
-            <Eye className="w-3.5 h-3.5 text-[#3A5A40] group-hover:scale-110 transition-transform" />
+            <Eye className="w-3.5 h-3.5 text-[#3A5A40] dark:text-[#84B082] group-hover:scale-110 transition-transform" />
             <span>{t.showStats}</span>
           </button>
         </div>
@@ -64,14 +64,14 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         /* Expanded State: Metric Cards + Hide toggle */
         <div className="animate-in fade-in zoom-in-98 duration-150">
           <div className="flex items-center justify-between mb-1.5 px-1">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C]">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] dark:text-[#848D75]">
               Live Stats
             </span>
             <button
               id="btn-hide-metrics"
               type="button"
               onClick={toggleVisibility}
-              className="text-[11px] text-[#7A746B] hover:text-[#3A5A40] flex items-center gap-1 font-medium transition hover:underline cursor-pointer"
+              className="text-[11px] text-[#7A746B] dark:text-[#A8A196] hover:text-[#3A5A40] dark:hover:text-[#84B082] flex items-center gap-1 font-medium transition hover:underline cursor-pointer"
             >
               <EyeOff className="w-3 h-3" />
               <span>{t.hideStats}</span>
@@ -84,19 +84,19 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             {/* Stopwatch Timer Card */}
             <div 
               id="metric-timer-card"
-              className="bg-[#F5F2EA] border border-[#E5E0D5] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs relative overflow-hidden"
+              className="bg-[#F5F2EA] dark:bg-[#1E1D19] border border-[#E5E0D5] dark:border-[#333029] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs relative overflow-hidden"
             >
-              <div className="flex items-center justify-between text-xs text-[#7A746B] mb-1">
-                <span className="flex items-center gap-1.5 font-sans font-bold uppercase tracking-wider text-[10px] text-[#9A9E7C]">
-                  <Timer className="w-3.5 h-3.5 text-[#3A5A40]" />
+              <div className="flex items-center justify-between text-xs text-[#7A746B] dark:text-[#A8A196] mb-1">
+                <span className="flex items-center gap-1.5 font-sans font-bold uppercase tracking-wider text-[10px] text-[#9A9E7C] dark:text-[#848D75]">
+                  <Timer className="w-3.5 h-3.5 text-[#3A5A40] dark:text-[#84B082]" />
                   {t.time}
                 </span>
                 {status === 'playing' && (
-                  <span className="w-2 h-2 rounded-full bg-[#3A5A40] animate-ping" />
+                  <span className="w-2 h-2 rounded-full bg-[#3A5A40] dark:bg-[#588157] animate-ping" />
                 )}
               </div>
               <div className="flex items-baseline justify-between mt-1">
-                <span className="text-xl sm:text-3xl font-sans font-medium tabular-nums tracking-tight text-[#4A453E]">
+                <span className="text-xl sm:text-3xl font-sans font-medium tabular-nums tracking-tight text-[#4A453E] dark:text-[#EDE8DF]">
                   {formatTime(timeSeconds)}
                 </span>
                 {status === 'playing' || status === 'paused' ? (
@@ -104,12 +104,12 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     id="btn-pause-toggle"
                     onClick={onTogglePause}
                     title={status === 'paused' ? t.resumeGame : t.paused}
-                    className="p-1.5 rounded-xl bg-[#EBE7DF] hover:bg-[#DAD2C3] text-[#4A453E] transition text-xs border border-[#DAD2C3] cursor-pointer"
+                    className="p-1.5 rounded-xl bg-[#EBE7DF] dark:bg-[#282622] hover:bg-[#DAD2C3] dark:hover:bg-[#333029] text-[#4A453E] dark:text-[#EDE8DF] transition text-xs border border-[#DAD2C3] dark:border-[#3A3730] cursor-pointer"
                   >
                     {status === 'paused' ? (
-                      <Play className="w-3.5 h-3.5 text-[#3A5A40] fill-[#3A5A40]" />
+                      <Play className="w-3.5 h-3.5 text-[#3A5A40] dark:text-[#84B082] fill-[#3A5A40] dark:fill-[#84B082]" />
                     ) : (
-                      <Pause className="w-3.5 h-3.5 text-[#7E8260]" />
+                      <Pause className="w-3.5 h-3.5 text-[#7E8260] dark:text-[#A3B18A]" />
                     )}
                   </button>
                 ) : null}
@@ -119,20 +119,20 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             {/* Moves Card */}
             <div 
               id="metric-moves-card"
-              className="bg-[#F5F2EA] border border-[#E5E0D5] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs"
+              className="bg-[#F5F2EA] dark:bg-[#1E1D19] border border-[#E5E0D5] dark:border-[#333029] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs"
             >
-              <div className="flex items-center justify-between text-xs text-[#7A746B] mb-1">
-                <span className="flex items-center gap-1.5 font-sans font-bold uppercase tracking-wider text-[10px] text-[#9A9E7C]">
-                  <Footprints className="w-3.5 h-3.5 text-[#3A5A40]" />
+              <div className="flex items-center justify-between text-xs text-[#7A746B] dark:text-[#A8A196] mb-1">
+                <span className="flex items-center gap-1.5 font-sans font-bold uppercase tracking-wider text-[10px] text-[#9A9E7C] dark:text-[#848D75]">
+                  <Footprints className="w-3.5 h-3.5 text-[#3A5A40] dark:text-[#84B082]" />
                   {t.moves}
                 </span>
                 {fewestMoves !== null && (
-                  <span className="text-[10px] text-[#7A746B] hidden sm:inline" title="Fewest Moves">
+                  <span className="text-[10px] text-[#7A746B] dark:text-[#A8A196] hidden sm:inline" title="Fewest Moves">
                     {t.fewestMoves}: {fewestMoves}
                   </span>
                 )}
               </div>
-              <div className="text-xl sm:text-3xl font-sans font-medium tabular-nums text-[#4A453E] mt-1">
+              <div className="text-xl sm:text-3xl font-sans font-medium tabular-nums text-[#4A453E] dark:text-[#EDE8DF] mt-1">
                 {moves}
               </div>
             </div>
@@ -140,17 +140,17 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             {/* Speed / Pace Card */}
             <div 
               id="metric-pace-card"
-              className="bg-[#F5F2EA] border border-[#E5E0D5] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs"
+              className="bg-[#F5F2EA] dark:bg-[#1E1D19] border border-[#E5E0D5] dark:border-[#333029] rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs"
             >
-              <div className="flex items-center justify-between text-xs text-[#7A746B] mb-1">
-                <span className="flex items-center gap-1.5 font-sans font-bold uppercase tracking-wider text-[10px] text-[#9A9E7C]">
-                  <Zap className="w-3.5 h-3.5 text-[#7E8260]" />
+              <div className="flex items-center justify-between text-xs text-[#7A746B] dark:text-[#A8A196] mb-1">
+                <span className="flex items-center gap-1.5 font-sans font-bold uppercase tracking-wider text-[10px] text-[#9A9E7C] dark:text-[#848D75]">
+                  <Zap className="w-3.5 h-3.5 text-[#7E8260] dark:text-[#A3B18A]" />
                   {t.movesPerMin.split(' ')[0]}
                 </span>
-                <span className="text-[10px] text-[#9A9E7C] uppercase tracking-wider font-semibold">APM</span>
+                <span className="text-[10px] text-[#9A9E7C] dark:text-[#848D75] uppercase tracking-wider font-semibold">APM</span>
               </div>
-              <div className="text-xl sm:text-3xl font-sans font-medium tabular-nums text-[#4A453E] flex items-baseline gap-1 mt-1">
-                {movesPerMin} <span className="text-xs text-[#7A746B] font-sans font-normal">m/min</span>
+              <div className="text-xl sm:text-3xl font-sans font-medium tabular-nums text-[#4A453E] dark:text-[#EDE8DF] flex items-baseline gap-1 mt-1">
+                {movesPerMin} <span className="text-xs text-[#7A746B] dark:text-[#A8A196] font-sans font-normal">m/min</span>
               </div>
             </div>
 

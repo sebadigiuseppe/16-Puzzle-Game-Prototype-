@@ -86,7 +86,36 @@ export default function App() {
 
   // Preferences & Toggles
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('sliding_puzzle_dark_mode');
+      if (saved === null) return true; // Dark mode by default
+      return saved === 'true';
+    } catch {
+      return true;
+    }
+  });
   const showNumbers = difficulty !== 'master';
+
+  // Apply dark mode class to document element
+  useEffect(() => {
+    try {
+      localStorage.setItem('sliding_puzzle_dark_mode', String(darkMode));
+    } catch (e) {
+      console.warn('Could not save dark mode preference:', e);
+    }
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  }, [darkMode]);
+
+  const handleToggleDarkMode = () => {
+    setDarkMode((prev) => !prev);
+  };
 
   // Leaderboard & Analytics State
   const [scores, setScores] = useState<ScoreRecord[]>([]);
@@ -437,12 +466,14 @@ export default function App() {
   };
 
   return (
-    <div id="app-root" className="min-h-screen bg-[#FDFCF8] text-[#4A453E] flex flex-col font-sans selection:bg-[#A3B18A]/30 selection:text-[#3A5A40]">
+    <div id="app-root" className="min-h-screen bg-[#FDFCF8] dark:bg-[#151412] text-[#4A453E] dark:text-[#EDE8DF] flex flex-col font-sans selection:bg-[#A3B18A]/30 selection:text-[#3A5A40] transition-colors duration-200">
       
       {/* Top Navbar */}
       <Navbar
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
+        darkMode={darkMode}
+        onToggleDarkMode={handleToggleDarkMode}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
         onOpenUpload={() => setIsUploadOpen(true)}
@@ -487,18 +518,18 @@ export default function App() {
           <button
             id="btn-quick-shuffle"
             onClick={handleRequestShuffle}
-            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] dark:bg-[#1E1D19] hover:bg-[#EBE7DF] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] border border-[#DAD2C3] dark:border-[#3A3730] transition flex items-center gap-2 text-xs font-semibold shadow-xs cursor-pointer"
           >
-            <Shuffle className="w-4 h-4 text-[#3A5A40]" />
+            <Shuffle className="w-4 h-4 text-[#3A5A40] dark:text-[#84B082]" />
             {t.shuffleBoard}
           </button>
 
           <button
             id="btn-quick-peek"
             onClick={() => setIsPeekOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] transition flex items-center gap-2 text-xs font-semibold shadow-xs cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl bg-[#F5F2EA] dark:bg-[#1E1D19] hover:bg-[#EBE7DF] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] border border-[#DAD2C3] dark:border-[#3A3730] transition flex items-center gap-2 text-xs font-semibold shadow-xs cursor-pointer"
           >
-            <Eye className="w-4 h-4 text-[#7E8260]" />
+            <Eye className="w-4 h-4 text-[#7E8260] dark:text-[#A3B18A]" />
             {t.referencePhoto}
           </button>
         </div>
@@ -506,15 +537,15 @@ export default function App() {
       </main>
 
       {/* Footer Branding */}
-      <footer className="py-3 px-4 border-t border-[#E5E0D5] bg-[#F5F2EA]/40 text-center text-xs text-[#7A746B]">
+      <footer className="py-3 px-4 border-t border-[#E5E0D5] dark:border-[#333029] bg-[#F5F2EA]/40 dark:bg-[#1A1916]/40 text-center text-xs text-[#7A746B] dark:text-[#A8A196] transition-colors duration-200">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <span className="font-serif italic text-[#4A453E]">{t.appTitle} • {t.footerNote || 'Solvable 4×4 sliding challenge'}</span>
+          <span className="font-serif italic text-[#4A453E] dark:text-[#EDE8DF]">{t.appTitle} • {t.footerNote || 'Solvable 4×4 sliding challenge'}</span>
           <a
             id="link-creator-linkedin"
             href="https://www.linkedin.com/in/sebadigiuseppe/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-[#7A746B] hover:text-[#3A5A40] transition underline underline-offset-2 flex items-center gap-1 font-medium"
+            className="text-[11px] text-[#7A746B] dark:text-[#A8A196] hover:text-[#3A5A40] dark:hover:text-[#84B082] transition underline underline-offset-2 flex items-center gap-1 font-medium"
           >
             Made by Seba Di Giuseppe
           </a>

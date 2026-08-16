@@ -1,10 +1,37 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-page: #FDFCF8;
+    --bg-surface: #F5F2EA;
+    --bg-surface-secondary: #EBE7DF;
+    --bg-board-frame: #EBE7DF;
+    --bg-card: #FDFCF8;
+    --text-main: #4A453E;
+    --text-muted: #7A746B;
+    --text-subtle: #9A9E7C;
+    --border-color: #E5E0D5;
+    --border-subtle: #DAD2C3;
+  }
+
+  html.dark, :root.dark {
+    --bg-page: #151412;
+    --bg-surface: #1E1D19;
+    --bg-surface-secondary: #272520;
+    --bg-board-frame: #24221D;
+    --bg-card: #1E1D19;
+    --text-main: #EDE8DF;
+    --text-muted: #A8A196;
+    --text-subtle: #848D75;
+    --border-color: #333029;
+    --border-subtle: #423F36;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #FDFCF8;
-    color: #4A453E;
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   .font-serif {
@@ -15,3 +42,4 @@
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
+

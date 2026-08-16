@@ -75,7 +75,7 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
         ref={boardRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="w-full max-w-[480px] sm:max-w-[530px] md:max-w-[560px] aspect-square relative bg-[#EBE7DF] p-2 sm:p-2.5 rounded-3xl sm:rounded-[32px] border border-[#DAD2C3] shadow-inner overflow-hidden"
+        className="w-full max-w-[480px] sm:max-w-[530px] md:max-w-[560px] aspect-square relative bg-[#EBE7DF] dark:bg-[#22201B] p-2 sm:p-2.5 rounded-3xl sm:rounded-[32px] border border-[#DAD2C3] dark:border-[#38352D] shadow-inner overflow-hidden transition-colors duration-200"
         style={{ touchAction: 'none' }}
       >
         {/* Background Grid Slots */}
@@ -84,7 +84,7 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
             <div
               key={`slot-${i}`}
               id={`puzzle-slot-${i}`}
-              className="w-full h-full rounded-xl sm:rounded-2xl bg-[#FDFCF8]/60 border border-dashed border-[#DAD2C3]/80 flex items-center justify-center text-[#9A9E7C] font-sans text-xs"
+              className="w-full h-full rounded-xl sm:rounded-2xl bg-[#FDFCF8]/60 dark:bg-[#1A1916]/70 border border-dashed border-[#DAD2C3]/80 dark:border-[#38352D] flex items-center justify-center text-[#9A9E7C] dark:text-[#848D75] font-sans text-xs"
             >
               <span className="opacity-30 text-[11px]">{i + 1}</span>
             </div>
@@ -140,19 +140,19 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
                 <div
                   className={`w-full h-full rounded-xl sm:rounded-2xl overflow-hidden relative transition-all duration-150 group flex items-center justify-center ${
                     isNumericOnly
-                      ? 'bg-[#9A9E7C] text-[#FDFCF8] shadow-sm border-b-2 sm:border-b-4 border-[#7E8260]'
+                      ? 'bg-[#9A9E7C] dark:bg-[#588157] text-[#FDFCF8] shadow-sm border-b-2 sm:border-b-4 border-[#7E8260] dark:border-[#3A5A40]'
                       : `shadow-sm border ${
                           isCorrectPosition
-                            ? 'border-[#3A5A40]/80 shadow-[#3A5A40]/10'
-                            : 'border-[#DAD2C3]/90'
+                            ? 'border-[#3A5A40]/80 dark:border-[#84B082]/80 shadow-[#3A5A40]/10'
+                            : 'border-[#DAD2C3]/90 dark:border-[#3A3730]'
                         }`
                   } ${
                     isMovable
-                      ? 'hover:scale-[1.01] hover:border-[#3A5A40] active:scale-95'
+                      ? 'hover:scale-[1.01] hover:border-[#3A5A40] dark:hover:border-[#84B082] active:scale-95'
                       : ''
                   }`}
                   style={{
-                    backgroundColor: isNumericOnly ? '#9A9E7C' : '#EBE7DF',
+                    backgroundColor: isNumericOnly ? '#9A9E7C' : '#22201B',
                     backgroundImage: isNumericOnly ? undefined : `url(${currentImage.url})`,
                     backgroundSize: '400% 400%',
                     backgroundPosition: `${bgPosX}% ${bgPosY}%`,
@@ -161,7 +161,7 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
                 >
                   {/* Subtle contrast gradient for image tiles */}
                   {!isNumericOnly && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/15 pointer-events-none" />
                   )}
 
                   {/* Tile Number Overlay / Indicator (Only rendered when showNumbers is enabled) */}
@@ -169,8 +169,8 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
                     <div
                       className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-sans font-semibold transition-opacity backdrop-blur-md flex items-center gap-0.5 shadow-xs ${
                         isCorrectPosition
-                          ? 'bg-[#3A5A40] text-[#FDFCF8] border border-[#3A5A40]'
-                          : 'bg-[#FDFCF8]/95 text-[#4A453E] border border-[#DAD2C3]'
+                          ? 'bg-[#3A5A40] dark:bg-[#588157] text-[#FDFCF8] border border-[#3A5A40] dark:border-[#588157]'
+                          : 'bg-[#FDFCF8]/95 dark:bg-[#1E1D19]/95 text-[#4A453E] dark:text-[#EDE8DF] border border-[#DAD2C3] dark:border-[#3A3730]'
                       }`}
                     >
                       <span>{tileNumber}</span>
@@ -191,7 +191,7 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
 
                   {/* Subtle Movable Hover Cue */}
                   {isMovable && (
-                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#3A5A40]/40 rounded-xl sm:rounded-2xl transition pointer-events-none" />
+                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#3A5A40]/40 dark:group-hover:border-[#84B082]/40 rounded-xl sm:rounded-2xl transition pointer-events-none" />
                   )}
                 </div>
               </motion.div>
@@ -207,19 +207,19 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-20 bg-[#FDFCF8]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+              className="absolute inset-0 z-20 bg-[#FDFCF8]/90 dark:bg-[#151412]/92 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
             >
-              <div className="w-14 h-14 rounded-2xl bg-[#A3B18A]/25 border border-[#9A9E7C]/40 flex items-center justify-center text-[#3A5A40] mb-3">
-                <Play className="w-6 h-6 fill-[#3A5A40] ml-0.5" />
+              <div className="w-14 h-14 rounded-2xl bg-[#A3B18A]/25 dark:bg-[#588157]/25 border border-[#9A9E7C]/40 dark:border-[#588157]/40 flex items-center justify-center text-[#3A5A40] dark:text-[#84B082] mb-3">
+                <Play className="w-6 h-6 fill-[#3A5A40] dark:fill-[#84B082] ml-0.5" />
               </div>
-              <h3 className="text-2xl font-bold font-serif text-[#3A5A40] mb-1">{t.paused}</h3>
-              <p className="text-xs font-sans text-[#7A746B] max-w-xs mb-4">
+              <h3 className="text-2xl font-bold font-serif text-[#3A5A40] dark:text-[#84B082] mb-1">{t.paused}</h3>
+              <p className="text-xs font-sans text-[#7A746B] dark:text-[#A8A196] max-w-xs mb-4">
                 {t.paused}
               </p>
               <button
                 id="btn-resume-game"
                 onClick={onResume}
-                className="px-6 h-11 rounded-full bg-[#A3B18A] hover:bg-[#8F9E77] text-[#FDFCF8] font-sans text-xs font-bold uppercase tracking-wider shadow-sm transition transform hover:scale-105 active:scale-95"
+                className="px-6 h-11 rounded-full bg-[#A3B18A] dark:bg-[#588157] hover:bg-[#8F9E77] dark:hover:bg-[#4d724c] text-[#FDFCF8] font-sans text-xs font-bold uppercase tracking-wider shadow-sm transition transform hover:scale-105 active:scale-95 cursor-pointer"
               >
                 {t.resumeGame}
               </button>
@@ -230,9 +230,9 @@ export const PuzzleBoard: React.FC<PuzzleBoardProps> = ({
       </div>
 
       {/* Helper Guidance Below Board */}
-      <div className="mt-3 flex items-center justify-between w-full max-w-[480px] sm:max-w-[530px] md:max-w-[560px] text-xs font-sans text-[#9A9E7C] px-2 italic">
+      <div className="mt-3 flex items-center justify-between w-full max-w-[480px] sm:max-w-[530px] md:max-w-[560px] text-xs font-sans text-[#9A9E7C] dark:text-[#848D75] px-2 italic">
         <span className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#3A5A40]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#3A5A40] dark:text-[#84B082]" />
           Slide tiles to restore the image
         </span>
         <span className="hidden sm:inline">Controls: Click, Tap, or Arrow Keys / WASD</span>

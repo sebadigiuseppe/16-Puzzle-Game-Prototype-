@@ -12,7 +12,9 @@ import {
   Sliders,
   Sparkles,
   Heart,
-  Plus
+  Plus,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { User } from '../firebase';
@@ -23,6 +25,8 @@ import { LanguageSelector } from './LanguageSelector';
 interface NavbarProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
   onOpenLeaderboard: () => void;
   onOpenHelp: () => void;
   onOpenUpload?: () => void;
@@ -40,6 +44,8 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   soundEnabled,
   onToggleSound,
+  darkMode,
+  onToggleDarkMode,
   onOpenLeaderboard,
   onOpenHelp,
   onOpenUpload,
@@ -81,7 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header id="app-navbar" className="w-full bg-[#F5F2EA]/95 backdrop-blur-md border-b border-[#E5E0D5] text-[#4A453E] sticky top-0 z-30 px-4 py-3 shadow-xs">
+    <header id="app-navbar" className="w-full bg-[#F5F2EA]/95 dark:bg-[#1A1916]/95 backdrop-blur-md border-b border-[#E5E0D5] dark:border-[#333029] text-[#4A453E] dark:text-[#EDE8DF] sticky top-0 z-30 px-4 py-3 shadow-xs transition-colors duration-200">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 flex-wrap">
         
         {/* Brand & Left Navigation */}
@@ -95,12 +101,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               title="Menu"
               aria-label="Toggle Navigation Menu"
-              className="w-9 h-9 rounded-xl bg-[#A3B18A]/25 hover:bg-[#A3B18A]/40 border border-[#9A9E7C]/40 flex items-center justify-center text-[#3A5A40] transition shadow-xs cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-[#A3B18A]/25 dark:bg-[#588157]/20 hover:bg-[#A3B18A]/40 dark:hover:bg-[#588157]/35 border border-[#9A9E7C]/40 dark:border-[#588157]/40 flex items-center justify-center text-[#3A5A40] dark:text-[#84B082] transition shadow-xs cursor-pointer"
             >
               {isMenuOpen ? (
-                <X className="w-5 h-5 text-[#3A5A40]" />
+                <X className="w-5 h-5" />
               ) : (
-                <Menu className="w-5 h-5 text-[#3A5A40]" />
+                <Menu className="w-5 h-5" />
               )}
             </button>
 
@@ -108,14 +114,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isMenuOpen && (
               <div
                 id="hamburger-dropdown-menu"
-                className="absolute left-0 mt-2 w-72 bg-[#FDFCF8] border border-[#DAD2C3] rounded-2xl shadow-xl z-50 p-2 overflow-visible animate-in fade-in zoom-in-95 duration-100 font-sans"
+                className="absolute left-0 mt-2 w-72 bg-[#FDFCF8] dark:bg-[#1E1D19] border border-[#DAD2C3] dark:border-[#3A3730] rounded-2xl shadow-xl z-50 p-2 overflow-visible animate-in fade-in zoom-in-95 duration-100 font-sans"
               >
                 {/* Header without 4x4 */}
-                <div className="px-3 py-2 border-b border-[#E5E0D5] text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] flex items-center justify-between">
+                <div className="px-3 py-2 border-b border-[#E5E0D5] dark:border-[#333029] text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] dark:text-[#848D75] flex items-center justify-between">
                   <span>Menu</span>
                   {totalScore > 0 && (
-                    <span className="text-[11px] font-bold text-[#3A5A40] flex items-center gap-1 normal-case">
-                      <Sparkles className="w-3 h-3 text-[#B08968]" />
+                    <span className="text-[11px] font-bold text-[#3A5A40] dark:text-[#84B082] flex items-center gap-1 normal-case">
+                      <Sparkles className="w-3 h-3 text-[#B08968] dark:text-[#DDA15E]" />
                       {totalScore.toLocaleString()} pts
                     </span>
                   )}
@@ -132,24 +138,55 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setIsMenuOpen(false);
                         onOpenUpload();
                       }}
-                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] hover:text-[#3A5A40] font-medium text-xs flex items-center justify-between transition cursor-pointer"
+                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] hover:text-[#3A5A40] dark:hover:text-[#84B082] font-medium text-xs flex items-center justify-between transition cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/15 flex items-center justify-center shrink-0">
-                          <Heart className="w-4 h-4 text-[#3A5A40]" />
+                        <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/15 dark:bg-[#588157]/20 flex items-center justify-center shrink-0">
+                          <Heart className="w-4 h-4 text-[#3A5A40] dark:text-[#84B082]" />
                         </div>
                         <div>
                           <div className="font-bold text-xs">Submit Your Pet</div>
-                          <div className="text-[10px] text-[#7A746B] leading-tight">
+                          <div className="text-[10px] text-[#7A746B] dark:text-[#A8A196] leading-tight">
                             Submit a picture of your pet to show on a puzzle
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3A5A40]/15 text-[#3A5A40] shrink-0 ml-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3A5A40]/15 dark:bg-[#588157]/25 text-[#3A5A40] dark:text-[#84B082] shrink-0 ml-1">
                         🐾 Send
                       </span>
                     </button>
                   )}
+
+                  {/* Dark Mode Toggle Item */}
+                  <button
+                    id="menu-btn-dark-mode"
+                    type="button"
+                    onClick={onToggleDarkMode}
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] hover:text-[#3A5A40] dark:hover:text-[#84B082] font-medium text-xs flex items-center justify-between transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 dark:bg-[#588157]/20 flex items-center justify-center">
+                        {darkMode ? (
+                          <Moon className="w-4 h-4 text-[#84B082] fill-[#84B082]/20" />
+                        ) : (
+                          <Sun className="w-4 h-4 text-[#B08968]" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs">{t.darkMode}</div>
+                        <div className="text-[10px] text-[#7A746B] dark:text-[#A8A196]">
+                          {darkMode ? 'Dark Theme' : 'Light Theme'}
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${
+                      darkMode 
+                        ? 'bg-[#588157]/25 text-[#84B082] border border-[#588157]/40' 
+                        : 'bg-[#EBE7DF] text-[#7A746B]'
+                    }`}>
+                      {darkMode ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
 
                   {/* Leaderboard */}
                   <button
@@ -159,19 +196,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setIsMenuOpen(false);
                       onOpenLeaderboard();
                     }}
-                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] hover:text-[#3A5A40] font-medium text-xs flex items-center justify-between transition"
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] hover:text-[#3A5A40] dark:hover:text-[#84B082] font-medium text-xs flex items-center justify-between transition cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 flex items-center justify-center">
-                        <Trophy className="w-4 h-4 text-[#3A5A40]" />
+                      <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 dark:bg-[#588157]/20 flex items-center justify-center">
+                        <Trophy className="w-4 h-4 text-[#3A5A40] dark:text-[#84B082]" />
                       </div>
                       <div>
                         <div className="font-bold text-xs">{t.leaderboard}</div>
-                        <div className="text-[10px] text-[#7A746B]">{t.rankings}</div>
+                        <div className="text-[10px] text-[#7A746B] dark:text-[#A8A196]">{t.rankings}</div>
                       </div>
                     </div>
                     {dailyStreak > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#B08968]/15 text-[#B08968]">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#B08968]/15 dark:bg-[#DDA15E]/20 text-[#B08968] dark:text-[#DDA15E]">
                         🔥 {dailyStreak}d
                       </span>
                     )}
@@ -185,25 +222,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                       sounds.enabled = !soundEnabled;
                       onToggleSound();
                     }}
-                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] font-medium text-xs flex items-center justify-between transition"
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] font-medium text-xs flex items-center justify-between transition cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-lg bg-[#3A5A40]/10 dark:bg-[#588157]/20 flex items-center justify-center">
                         {soundEnabled ? (
-                          <Volume2 className="w-4 h-4 text-[#3A5A40]" />
+                          <Volume2 className="w-4 h-4 text-[#3A5A40] dark:text-[#84B082]" />
                         ) : (
-                          <VolumeX className="w-4 h-4 text-[#9A9E7C]" />
+                          <VolumeX className="w-4 h-4 text-[#9A9E7C] dark:text-[#848D75]" />
                         )}
                       </div>
                       <div>
                         <div className="font-bold text-xs">Audio Effects</div>
-                        <div className="text-[10px] text-[#7A746B]">
+                        <div className="text-[10px] text-[#7A746B] dark:text-[#A8A196]">
                           {soundEnabled ? 'Enabled' : 'Muted'}
                         </div>
                       </div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      soundEnabled ? 'bg-[#3A5A40]/15 text-[#3A5A40]' : 'bg-[#EBE7DF] text-[#7A746B]'
+                      soundEnabled 
+                        ? 'bg-[#3A5A40]/15 dark:bg-[#588157]/25 text-[#3A5A40] dark:text-[#84B082]' 
+                        : 'bg-[#EBE7DF] dark:bg-[#2B2823] text-[#7A746B] dark:text-[#A8A196]'
                     }`}>
                       {soundEnabled ? 'ON' : 'OFF'}
                     </span>
@@ -217,19 +256,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setIsMenuOpen(false);
                       onOpenHelp();
                     }}
-                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] text-[#4A453E] hover:text-[#3A5A40] font-medium text-xs flex items-center gap-2.5 transition"
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#F5F2EA] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] hover:text-[#3A5A40] dark:hover:text-[#84B082] font-medium text-xs flex items-center gap-2.5 transition cursor-pointer"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-[#7E8260]/15 flex items-center justify-center">
-                      <HelpCircle className="w-4 h-4 text-[#7E8260]" />
+                    <div className="w-7 h-7 rounded-lg bg-[#7E8260]/15 dark:bg-[#7E8260]/25 flex items-center justify-center">
+                      <HelpCircle className="w-4 h-4 text-[#7E8260] dark:text-[#A3B18A]" />
                     </div>
                     <div>
                       <div className="font-bold text-xs">{t.howToPlay}</div>
-                      <div className="text-[10px] text-[#7A746B]">Rules & Tips</div>
+                      <div className="text-[10px] text-[#7A746B] dark:text-[#A8A196]">Rules & Tips</div>
                     </div>
                   </button>
 
                   {/* Language Flags Row inside Menu */}
-                  <div className="pt-2 mt-1 border-t border-[#E5E0D5] px-1 pb-1">
+                  <div className="pt-2 mt-1 border-t border-[#E5E0D5] dark:border-[#333029] px-1 pb-1">
                     <LanguageSelector
                       currentLanguage={currentLanguage}
                       onSelectLanguage={onSelectLanguage}
@@ -245,12 +284,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* App Title & Difficulty Button at the side of 4x4 */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold font-serif tracking-tight text-[#3A5A40]">
+              <h1 className="text-xl font-bold font-serif tracking-tight text-[#3A5A40] dark:text-[#84B082]">
                 {t.appTitle}
               </h1>
               
               {/* 4x4 Grid Badge */}
-              <span className="text-[11px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#A3B18A]/25 text-[#3A5A40] border border-[#9A9E7C]/40 uppercase tracking-wider">
+              <span className="text-[11px] font-sans font-semibold px-2 py-0.5 rounded-full bg-[#A3B18A]/25 dark:bg-[#588157]/20 text-[#3A5A40] dark:text-[#84B082] border border-[#9A9E7C]/40 dark:border-[#588157]/35 uppercase tracking-wider">
                 {t.gridSize}
               </span>
 
@@ -260,21 +299,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                   id="btn-difficulty-toggle"
                   type="button"
                   onClick={() => setIsDiffOpen(!isDiffOpen)}
-                  className="px-2.5 py-1 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#3A5A40] border border-[#DAD2C3] font-sans font-bold text-xs transition flex items-center gap-1.5 shadow-2xs"
+                  className="px-2.5 py-1 rounded-xl bg-[#FDFCF8] dark:bg-[#1E1D19] hover:bg-[#EBE7DF] dark:hover:bg-[#282622] text-[#3A5A40] dark:text-[#84B082] border border-[#DAD2C3] dark:border-[#3A3730] font-sans font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                   title="Change Difficulty"
                 >
-                  <Sliders className="w-3 h-3 text-[#7E8260]" />
+                  <Sliders className="w-3 h-3 text-[#7E8260] dark:text-[#A3B18A]" />
                   <span>{difficultyLabels[difficulty]}</span>
-                  <ChevronDown className="w-3 h-3 text-[#7A746B]" />
+                  <ChevronDown className="w-3 h-3 text-[#7A746B] dark:text-[#A8A196]" />
                 </button>
 
                 {/* Difficulty Popover Dropdown */}
                 {isDiffOpen && (
                   <div
                     id="difficulty-dropdown-menu"
-                    className="absolute left-0 mt-1.5 w-44 bg-[#FDFCF8] border border-[#DAD2C3] rounded-2xl shadow-xl z-50 p-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-100 font-sans"
+                    className="absolute left-0 mt-1.5 w-44 bg-[#FDFCF8] dark:bg-[#1E1D19] border border-[#DAD2C3] dark:border-[#3A3730] rounded-2xl shadow-xl z-50 p-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-100 font-sans"
                   >
-                    <div className="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] border-b border-[#E5E0D5]">
+                    <div className="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider text-[#9A9E7C] dark:text-[#848D75] border-b border-[#E5E0D5] dark:border-[#333029]">
                       {t.difficulty}
                     </div>
                     <div className="py-1 flex flex-col gap-0.5">
@@ -287,10 +326,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                             onChangeDifficulty(d);
                             setIsDiffOpen(false);
                           }}
-                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition cursor-pointer ${
                             difficulty === d
-                              ? 'bg-[#3A5A40] text-[#FDFCF8]'
-                              : 'text-[#4A453E] hover:bg-[#F5F2EA]'
+                              ? 'bg-[#3A5A40] dark:bg-[#588157] text-[#FDFCF8]'
+                              : 'text-[#4A453E] dark:text-[#EDE8DF] hover:bg-[#F5F2EA] dark:hover:bg-[#282622]'
                           }`}
                         >
                           <span>{difficultyLabels[d]}</span>
@@ -316,38 +355,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div 
               onClick={onOpenLeaderboard}
               title="Your Total Stacked Points - Click to view Leaderboard & Standing"
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#FDFCF8] border border-[#E5E0D5] hover:border-[#3A5A40]/40 rounded-xl text-xs font-semibold text-[#3A5A40] shadow-xs cursor-pointer transition"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#FDFCF8] dark:bg-[#1E1D19] border border-[#E5E0D5] dark:border-[#333029] hover:border-[#3A5A40]/40 dark:hover:border-[#588157]/50 rounded-xl text-xs font-semibold text-[#3A5A40] dark:text-[#84B082] shadow-xs cursor-pointer transition"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#B08968]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#B08968] dark:text-[#DDA15E]" />
               <span className="font-bold">{totalScore.toLocaleString()}</span>
-              <span className="text-[10px] text-[#7A746B]">pts</span>
+              <span className="text-[10px] text-[#7A746B] dark:text-[#A8A196]">pts</span>
               {dailyStreak > 1 && (
-                <span className="text-[10px] text-[#B08968] font-bold ml-0.5">🔥{dailyStreak}</span>
+                <span className="text-[10px] text-[#B08968] dark:text-[#DDA15E] font-bold ml-0.5">🔥{dailyStreak}</span>
               )}
             </div>
           )}
 
           {/* Google Auth Button / User Profile Card */}
           {currentUser ? (
-            <div className="flex items-center gap-1.5 bg-[#FDFCF8] border border-[#E5E0D5] rounded-xl pl-2 pr-1.5 py-1 text-xs shadow-xs">
+            <div className="flex items-center gap-1.5 bg-[#FDFCF8] dark:bg-[#1E1D19] border border-[#E5E0D5] dark:border-[#333029] rounded-xl pl-2 pr-1.5 py-1 text-xs shadow-xs">
               {currentUser.photoURL ? (
                 <img 
                   src={currentUser.photoURL} 
                   alt={currentUser.displayName || "User"} 
-                  className="w-5 h-5 rounded-full object-cover border border-[#DAD2C3]"
+                  className="w-5 h-5 rounded-full object-cover border border-[#DAD2C3] dark:border-[#3A3730]"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <UserIcon className="w-4 h-4 text-[#3A5A40]" />
+                <UserIcon className="w-4 h-4 text-[#3A5A40] dark:text-[#84B082]" />
               )}
-              <span className="font-semibold text-[#4A453E] max-w-[110px] truncate">
+              <span className="font-semibold text-[#4A453E] dark:text-[#EDE8DF] max-w-[110px] truncate">
                 {currentUser.displayName?.split(' ')[0] || 'Player'}
               </span>
               <button
                 id="btn-sign-out"
                 onClick={onSignOutGoogle}
                 title={t.signOut}
-                className="p-1 hover:bg-[#EBE7DF] rounded-lg text-[#7A746B] hover:text-[#4A453E] transition"
+                className="p-1 hover:bg-[#EBE7DF] dark:hover:bg-[#282622] rounded-lg text-[#7A746B] dark:text-[#A8A196] hover:text-[#4A453E] dark:hover:text-[#EDE8DF] transition cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -357,7 +396,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               id="btn-google-login"
               onClick={onSignInGoogle}
               title={t.signIn}
-              className="px-3 py-2 rounded-xl bg-[#FDFCF8] hover:bg-[#EBE7DF] text-[#4A453E] border border-[#DAD2C3] font-sans font-semibold text-xs transition flex items-center gap-1.5 shadow-xs"
+              className="px-3 py-2 rounded-xl bg-[#FDFCF8] dark:bg-[#1E1D19] hover:bg-[#EBE7DF] dark:hover:bg-[#282622] text-[#4A453E] dark:text-[#EDE8DF] border border-[#DAD2C3] dark:border-[#3A3730] font-sans font-semibold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -386,4 +425,5 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
 
