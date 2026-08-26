@@ -39,7 +39,7 @@
 | Juego de sliding puzzle 4x4 | Leaderboard segmentado por país |
 | Imagen del puzzle cambia diariamente (curada por el equipo) | Autenticación (login con Google u otro proveedor) |
 | Leaderboard diario con nombre libre (sin cuenta) | Subida de fotos de mascotas por usuarios + mecánica de selección para el puzzle del día siguiente |
-| Registro de tiempo y/o movimientos por partida | Monetización: publicidad y donaciones (incluye mecánica "donar para aumentar probabilidad de aparición" — pendiente revisión legal/ética) |
+| Registro de tiempo y/o movimientos por partida | Monetización: publicidad y donaciones (mecánica de recompensa garantizada al donar, no basada en probabilidad — ver sección 7, R1) |
 | — | Analítica de datos avanzada / dashboards (rol de Data reservado para esta fase) |
 
 ---
@@ -90,7 +90,7 @@ Clasificación según matriz de Poder/Interés (Mendelow), para definir la estra
 
 | ID | Riesgo | Categoría | Probabilidad | Impacto | Prioridad | Estrategia | Acción concreta | Responsable |
 |---|---|---|---|---|---|---|---|---|
-| R1 | Mecánica "donar para aumentar probabilidad" se interpreta como juego de azar pagado | Legal/Ético | Media | Alto | **Alta** | Mitigar | Investigar regulación local antes de Fase 2; diseñar como "donación con recompensa transparente" (mostrar probabilidades públicamente) | PO (tú) |
+| R1 | Mecánica de donación podría interpretarse como juego de azar pagado | Legal/Ético | Baja *(mitigada por diseño: se optó por recompensa garantizada, no basada en probabilidad — ver Backlog, US8.1)* | Medio | **Media** | Mitigar | Confirmar con revisión legal/ética antes de activar en Fase 2, aunque el rediseño ya reduce significativamente el riesgo | PO (tú) |
 | R2 | Leaderboard sin autenticación permite falsificar puntajes | Técnico | Alta | Medio | **Alta** | Aceptar (en MVP) / Mitigar (Fase 2) | Documentar como limitación conocida del MVP; planear validación server-side en Fase 2 | Dev Backend |
 | R3 | Backend/infra no cubierto explícitamente por roles confirmados | Equipo/Técnico | Media | Alto | **Alta** | Mitigar | Confirmar con el equipo actual antes de cerrar Sprint 0; si no está cubierto, reclutar específicamente ese rol | PM (tú) |
 | R4 | Disponibilidad variable del equipo voluntario | Equipo | Alta | Medio | **Alta** | Mitigar | Agregar colchón en cronograma; check-ins cortos y frecuentes en vez de asumir dedicación full-time | Scrum Master (tú) |
@@ -166,7 +166,7 @@ Vista resumida de los grandes bloques de trabajo, mapeados a fase. El detalle de
 | E5 | Autenticación de usuarios | Fase 2 | Login (ej. Google) para identidad persistente de jugadores |
 | E6 | Leaderboard por país | Fase 2 | Segmentación geográfica de resultados |
 | E7 | Subida de fotos de mascotas | Fase 2 | Formulario de carga, moderación de contenido, almacenamiento |
-| E8 | Selección de mascota del día | Fase 2 | Mecánica de elección de qué mascota aparece (vinculada a R1 — revisión legal pendiente) |
+| E8 | Recompensa por donación | Fase 2 | Mecánica de donación con recompensa garantizada (no basada en probabilidad) para selección de mascota del día (vinculada a R1 — revisión legal pendiente) |
 | E9 | Monetización | Fase 2 | Integración de publicidad y/o donaciones |
 | E10 | Analítica y reportes | Fase 2 | Dashboards de comportamiento de usuario (rol Data) |
 
@@ -180,8 +180,8 @@ Vista resumida de los grandes bloques de trabajo, mapeados a fase. El detalle de
 | 2 | Matriz formal de riesgos (probabilidad × impacto) | ✅ Completado (sección 7) |
 | 3 | Stakeholders formales y plan de comunicación | ✅ Completado (sección 4) |
 | 4 | Épicas de alto nivel | ✅ Completado (sección 11) |
-| 5 | Product Backlog con historias de usuario y criterios de aceptación | Pendiente (documento aparte) |
-| 6 | Criterios de aceptación por historia de usuario / Definition of Done | Pendiente |
+| 5 | Product Backlog con historias de usuario y criterios de aceptación | ✅ Completado (`product_backlog.md`) |
+| 6 | Criterios de aceptación por historia de usuario / Definition of Done | ✅ Completado (`product_backlog.md` — incluye DoR y DoD) |
 | 7 | Definición de nombre del proyecto y dominio | Pendiente |
 | 8 | Revisión legal/ética de mecánica de donación (Fase 2) | Pendiente |
 | 9 | Confirmación técnica final de plataforma de hosting (con Backend) | Pendiente |
